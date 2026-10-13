@@ -1,0 +1,14 @@
+.DS_Store
+.env*
+!.env.example
+*.tmp
+
+# Python
+.venv/
+__pycache__/
+*.egg-info/
+build/
+
+# Pipeline output (your wardrobe photos stay on your machine)
+/output/
+/imports/
