@@ -60,27 +60,26 @@ pnpm --dir app install
 
 ## 5. Deploy (Vercel)
 
-Run these from `app/`:
+Run these from `app/`. `<project-id>` is the Neon id from step 4.
 
-1. `npx -y vercel login` — browser approval once.
-2. `npx -y vercel link --yes --project ownfit`
-3. Add the database URL for production and preview, reading it from the file so it never appears on the command line:
+1. `npx -y vercel login` opens the browser once.
+2. Pick the scope. `npx -y vercel teams ls` lists them; if there's more than one, ask the user which (usually their personal Hobby scope). Pass `--scope <scope>` to **every** vercel command below so nothing lands in a work team.
+3. `npx -y vercel link --yes --project ownfit --scope <scope>`
+4. Add the database URL to all three environments. Hold it in a shell variable (piping `neonctl` straight into `vercel` is too slow; vercel sees empty stdin) and never print it:
    ```bash
-   grep '^DATABASE_URL=' .env.local | cut -d= -f2- | tr -d '\n' > .dburl.tmp
-   npx -y vercel env add DATABASE_URL production --sensitive < .dburl.tmp
-   npx -y vercel env add DATABASE_URL preview --sensitive < .dburl.tmp
-   rm .dburl.tmp
+   V=$(npx -y neonctl connection-string --project-id <project-id> | tr -d '\n') && [ -n "$V" ] && for E in production preview development; do printf '%s' "$V" | npx -y vercel env add DATABASE_URL $E --yes --scope <scope> 2>&1 | grep -iv postgres; done; unset V
    ```
-4. Anthropic API key (needed from Stage 5 on; the user may skip it for now). **Don't ask them to paste it in chat.** Ask them to run this themselves in their own terminal, from `app/`, and paste the key at the prompt:
+   If a variable already exists (re-run), vercel says so; skip it unless the user wants it replaced (`--force`).
+5. Anthropic API key (needed from Stage 5 on; the user may skip it for now). **Don't ask them to paste it in chat.** Ask them to run this themselves in their own terminal, from `app/`, and paste the key at the prompt:
    ```bash
-   npx vercel env add ANTHROPIC_API_KEY production --sensitive
+   npx vercel env add ANTHROPIC_API_KEY production --sensitive --scope <scope>
    ```
    Explain: the deployed app bills model calls to this key (roughly cents per day); a Claude subscription doesn't cover a deployed app.
-5. `npx -y vercel deploy --prod` — report the production URL.
+6. `npx -y vercel deploy --prod --yes --scope <scope>`. Then find the public URL: `npx -y vercel inspect <deployment-url> --scope <scope>` lists aliases; use the short `*.vercel.app` alias (the `-<scope>.vercel.app` ones are behind Vercel login).
 
 ## 6. Done
 
-Open the URL (or tell the user to). The page should say **Ownfit is set up** and **Database: connected**. If it says "not reachable", re-check step 5.3.
+Open the URL (or tell the user to). The page should say **Ownfit is set up** and **Database: connected**. If it says "not reachable", re-check step 5.4.
 
 ## Re-running
 
