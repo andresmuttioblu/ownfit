@@ -8,6 +8,7 @@ dependencies = [
   "numpy",
   "opencv-python-headless",
   "pillow",
+  "pillow-heif",
   "rembg[cpu]",
 ]
 
