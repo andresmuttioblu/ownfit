@@ -1,0 +1,22 @@
+{
+  "$comment": "Shared tag vocabulary. Used by local tagging (Claude Code, pipeline validator) and the app (review screen, API tagging). Inclusive of every wardrobe. Edit here only.",
+  "categories": {
+    "top": ["t-shirt", "shirt", "blouse", "polo", "tank-top", "camisole", "bodysuit", "crop-top", "sweater", "cardigan", "turtleneck", "hoodie", "sweatshirt", "overshirt", "sports-bra", "other"],
+    "bottom": ["jeans", "trousers", "chinos", "dress-pants", "shorts", "athletic-shorts", "mini-skirt", "midi-skirt", "maxi-skirt", "leggings", "joggers", "cargo-pants", "other"],
+    "dress": ["mini-dress", "midi-dress", "maxi-dress", "shirt-dress", "slip-dress", "sweater-dress", "wrap-dress", "other"],
+    "one-piece": ["jumpsuit", "romper", "overalls", "suit", "other"],
+    "outerwear": ["jacket", "blazer", "coat", "trench-coat", "parka", "puffer", "denim-jacket", "leather-jacket", "bomber", "vest", "raincoat", "other"],
+    "shoes": ["sneakers", "running-shoes", "loafers", "oxfords", "derbies", "boots", "ankle-boots", "chelsea-boots", "heels", "flats", "sandals", "mules", "slides", "other"],
+    "bag": ["tote", "crossbody", "shoulder-bag", "backpack", "clutch", "belt-bag", "briefcase", "duffel", "other"],
+    "accessory": ["belt", "scarf", "hat", "cap", "beanie", "sunglasses", "tie", "bow-tie", "gloves", "watch", "hair-accessory", "socks", "other"],
+    "jewelry": ["necklace", "earrings", "bracelet", "ring", "brooch", "other"],
+    "swimwear": ["swimsuit", "bikini", "swim-trunks", "cover-up", "other"]
+  },
+  "colors": ["black", "white", "cream", "beige", "camel", "brown", "grey", "charcoal", "navy", "blue", "light-blue", "teal", "green", "olive", "khaki", "red", "burgundy", "pink", "purple", "yellow", "orange", "gold", "silver", "multicolor"],
+  "patterns": ["solid", "striped", "checked", "plaid", "floral", "polka-dot", "animal-print", "graphic", "geometric", "paisley", "camouflage", "colorblock", "textured", "other"],
+  "materials": ["cotton", "linen", "wool", "cashmere", "silk", "satin", "denim", "leather", "suede", "synthetic", "knit", "fleece", "corduroy", "velvet", "canvas", "metal", "other"],
+  "seasons": ["spring", "summer", "autumn", "winter"],
+  "formality": { "1": "athletic / lounge", "2": "casual", "3": "smart casual", "4": "business", "5": "formal / black tie" },
+  "warmth": { "1": "very light (summer heat)", "2": "light", "3": "medium", "4": "warm", "5": "very warm (winter)" },
+  "limits": { "colors": 3, "tags": 8, "tag_length": 30, "name": 60 }
+}
