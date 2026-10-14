@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import type { Weather } from "@/lib/outfits/filter";
 import type { StyleProfile } from "@/lib/style/profile";
 
@@ -47,8 +47,26 @@ export const garments = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     retiredAt: timestamp("retired_at", { withTimezone: true }),
     retireReason: retireReason("retire_reason"),
+    notTodayOn: date("not_today_on"), // "not today": hidden on this local date only, back the next day
   },
   (t) => [uniqueIndex("garments_import_item").on(t.importId, t.importItemId)],
 );
 
 export type Garment = typeof garments.$inferSelect;
+
+export const outfitEventKind = pgEnum("outfit_event_kind", ["wore", "like", "dislike"]);
+
+/** Outfit history and feedback: what was worn, liked or disliked, on the user's local date. */
+export const outfitEvents = pgTable(
+  "outfit_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    kind: outfitEventKind("kind").notNull(),
+    garmentIds: uuid("garment_ids").array().notNull(),
+    activity: text("activity").notNull(),
+    localDate: date("local_date").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("outfit_events_user_date").on(t.userId, t.localDate)],
+);
