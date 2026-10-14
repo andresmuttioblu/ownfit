@@ -1,0 +1,115 @@
+{
+  "license": "Photos from Unsplash under the Unsplash License (https://unsplash.com/license). They are linked, not copied into this repo; each one credits its photographer.",
+  "rounds": [
+    { "round": 1, "styles": [
+      { "style": "minimal",
+        "weights": { "archetypes": { "minimal": 1, "smart-casual": 0.3 }, "palette": { "neutral": 1, "monochrome": 0.4 }, "fit": { "slim": 0.5, "tailored": 0.5 }, "pattern": { "solid": 1 }, "formality": 3 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1559582798-678dfc71ccd8", "page": "https://unsplash.com/photos/TjUJJACTav4", "credit": { "name": "Zahir Namane", "url": "https://unsplash.com/@zahirnamane" }, "alt": "Man walking on a road holding a bag" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1647218947427-d783309440d2", "page": "https://unsplash.com/photos/qU1T0f90Uxg", "credit": { "name": "Navid Sohrabi", "url": "https://unsplash.com/@navidsohrabi" }, "alt": "Woman in a grey top and black trousers walking a dog" } } },
+      { "style": "streetwear",
+        "weights": { "archetypes": { "streetwear": 1, "edgy": 0.3 }, "palette": { "neutral": 0.5, "bright": 0.4 }, "fit": { "relaxed": 0.7, "oversized": 0.5 }, "pattern": { "bold": 0.6, "solid": 0.4 }, "formality": 1 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1600574691453-499962cc0611", "page": "https://unsplash.com/photos/Gi1rDqy9R40", "credit": { "name": "LOGAN WEAVER | @LGNWVR", "url": "https://unsplash.com/@lgnwvr" }, "alt": "Man in a grey jacket and graphic tee on a sidewalk" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1589351189946-b8eb5e170ba6", "page": "https://unsplash.com/photos/GrUNiwBsAGg", "credit": { "name": "Ilya Mirnyy", "url": "https://unsplash.com/@mirnyy" }, "alt": "Woman in a black top and white cardigan by a brick building" } } },
+      { "style": "bohemian",
+        "weights": { "archetypes": { "bohemian": 1, "romantic": 0.4 }, "palette": { "earth": 0.8, "bright": 0.3 }, "fit": { "relaxed": 1 }, "pattern": { "bold": 1 }, "formality": 2 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1579776638229-1f37ebebcf8f", "page": "https://unsplash.com/photos/mlNTJW-Wxg8", "credit": { "name": "Sorin Sîrbu", "url": "https://unsplash.com/@sirbusorin" }, "alt": "Man in a tribal-print cardigan and fedora" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1478146896981-b80fe463b330", "page": "https://unsplash.com/photos/Oo5sKlgIOZQ", "credit": { "name": "Edwin Andrade", "url": "https://unsplash.com/@theunsteady5" }, "alt": "Woman in a floral dress and hat on a road" } } },
+      { "style": "classic",
+        "weights": { "archetypes": { "classic": 1, "minimal": 0.4 }, "palette": { "earth": 0.8, "neutral": 0.6 }, "fit": { "tailored": 1 }, "pattern": { "solid": 1 }, "formality": 4 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1619603364937-8d7af41ef206", "page": "https://unsplash.com/photos/-au3XMzfhro", "credit": { "name": "Taras Chernus", "url": "https://unsplash.com/@chernus_tr" }, "alt": "Man in a brown overcoat" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1539533018447-63fcce2678e3", "page": "https://unsplash.com/photos/AhBR8UGvsGU", "credit": { "name": "Bundo Kim", "url": "https://unsplash.com/@bundo" }, "alt": "Woman in a camel coat" } } }
+    ] },
+    { "round": 2, "styles": [
+      { "style": "smart-casual",
+        "weights": { "archetypes": { "smart-casual": 1, "classic": 0.4 }, "palette": { "neutral": 0.8 }, "fit": { "slim": 0.6, "tailored": 0.4 }, "pattern": { "solid": 0.8, "subtle": 0.3 }, "formality": 3 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1624835567150-0c530a20d8cc", "page": "https://unsplash.com/photos/OSS7Gd9whn8", "credit": { "name": "Mohamad Khosravi", "url": "https://unsplash.com/@mohamadkhosravi" }, "alt": "Man in a light blue shirt and dark trousers" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1619086303291-0ef7699e4b31", "page": "https://unsplash.com/photos/C43tCJffOh4", "credit": { "name": "Vladimir Yelizarov", "url": "https://unsplash.com/@yelizarov" }, "alt": "Woman in a white shirt and white trousers" } } },
+      { "style": "sporty",
+        "weights": { "archetypes": { "sporty": 1, "streetwear": 0.3 }, "palette": { "neutral": 0.6, "monochrome": 0.5 }, "fit": { "relaxed": 0.8 }, "pattern": { "solid": 1 }, "formality": 1 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1553859943-a02c5418b798", "page": "https://unsplash.com/photos/iun3EnrZKxI", "credit": { "name": "sobhan joodi", "url": "https://unsplash.com/@sbhnleo" }, "alt": "Man in a white crew-neck tee and joggers" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1789110519766-117eb0e35bea", "page": "https://unsplash.com/photos/y2WnRJssfZw", "credit": { "name": "engin akyurt", "url": "https://unsplash.com/@enginakyurt" }, "alt": "Woman in a black tank top and grey sweatpants" } } },
+      { "style": "edgy",
+        "weights": { "archetypes": { "edgy": 1, "streetwear": 0.3 }, "palette": { "dark": 1 }, "fit": { "slim": 0.8 }, "pattern": { "solid": 1 }, "formality": 2 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1675877879221-871aa9f7c314", "page": "https://unsplash.com/photos/P8Gva6BhAXI", "credit": { "name": "Mohamad Khosravi", "url": "https://unsplash.com/@mohamadkhosravi" }, "alt": "Man in a black leather jacket" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1615397815341-bb06f6d55c94", "page": "https://unsplash.com/photos/a3QXIQI8z90", "credit": { "name": "Khalid Boutchich", "url": "https://unsplash.com/@khalidboutchich" }, "alt": "Woman in a black leather jacket" } } },
+      { "style": "preppy",
+        "weights": { "archetypes": { "preppy": 1, "classic": 0.4 }, "palette": { "neutral": 0.6, "bright": 0.3 }, "fit": { "slim": 0.5, "tailored": 0.5 }, "pattern": { "subtle": 0.7, "solid": 0.4 }, "formality": 3 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1775816364124-b305f2b06ce7", "page": "https://unsplash.com/photos/acDOZXe5UtQ", "credit": { "name": "BANDAR BAANT", "url": "https://unsplash.com/@bandarbaant" }, "alt": "Man in a light purple polo shirt and black jeans" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1721746749092-6ac1a54d15f5", "page": "https://unsplash.com/photos/FKuE5LpGSvY", "credit": { "name": "Rydale Clothing", "url": "https://unsplash.com/@rydaleclothing" }, "alt": "Woman in a checked blazer by the sea" } } }
+    ] },
+    { "round": 3, "styles": [
+      { "style": "earth tones",
+        "weights": { "archetypes": { "smart-casual": 0.6, "workwear": 0.3, "minimal": 0.3 }, "palette": { "earth": 1 }, "fit": { "relaxed": 0.5, "slim": 0.5 }, "pattern": { "solid": 1 }, "formality": 2 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1617114919297-3c8ddb01f599", "page": "https://unsplash.com/photos/d54wbtjedog", "credit": { "name": "Mohamad Khosravi", "url": "https://unsplash.com/@mohamadkhosravi" }, "alt": "Man in a tan jacket and jeans" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1618333452884-5c8d211ed2ad", "page": "https://unsplash.com/photos/DsKcWDk6NEU", "credit": { "name": "The AW Creative Digital Marketing", "url": "https://unsplash.com/@theawguide" }, "alt": "Woman in a brown coat and grey trousers" } } },
+      { "style": "bright color",
+        "weights": { "archetypes": { "streetwear": 0.5, "bohemian": 0.4 }, "palette": { "bright": 1 }, "fit": { "relaxed": 0.7 }, "pattern": { "bold": 1 }, "formality": 2 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1672863512959-6f7b696006cd", "page": "https://unsplash.com/photos/qBa9744Bph0", "credit": { "name": "Venrick Azcueta", "url": "https://unsplash.com/@venrick" }, "alt": "Man in a brightly patterned outfit" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1690918845429-ebe653c94e5a", "page": "https://unsplash.com/photos/lOMCq_a6Uwo", "credit": { "name": "Amani Nation", "url": "https://unsplash.com/@amani_nation" }, "alt": "Woman in yellow trousers and a blue coat" } } },
+      { "style": "all black",
+        "weights": { "archetypes": { "minimal": 0.6, "edgy": 0.6 }, "palette": { "dark": 1, "monochrome": 1 }, "fit": { "slim": 0.7, "tailored": 0.3 }, "pattern": { "solid": 1 }, "formality": 3 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1618886614638-80e3c103d31a", "page": "https://unsplash.com/photos/vS0Kya7E5V4", "credit": { "name": "Mohamad Khosravi", "url": "https://unsplash.com/@mohamadkhosravi" }, "alt": "Man in an all-black jacket and trousers" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1736894630069-fdf8f75d86ad", "page": "https://unsplash.com/photos/OH4X9S2gJZw", "credit": { "name": "Samir Vanegas", "url": "https://unsplash.com/@samir_vanegas_" }, "alt": "Woman in an all-black outfit" } } },
+      { "style": "pastel",
+        "weights": { "archetypes": { "romantic": 0.6, "smart-casual": 0.4 }, "palette": { "pastel": 1 }, "fit": { "relaxed": 0.6, "tailored": 0.4 }, "pattern": { "solid": 1 }, "formality": 3 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1664543030885-886de74e826b", "page": "https://unsplash.com/photos/2hEmF5sx9F0", "credit": { "name": "Jesús Boscán", "url": "https://unsplash.com/@jboscan" }, "alt": "Man in a pink suit" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1768033976309-b236cbd34509", "page": "https://unsplash.com/photos/tw-UisexnXA", "credit": { "name": "IMANA", "url": "https://unsplash.com/@imanaindia" }, "alt": "Woman in a pink floral outfit" } } }
+    ] },
+    { "round": 4, "styles": [
+      { "style": "oversized",
+        "weights": { "archetypes": { "streetwear": 0.6, "minimal": 0.4 }, "palette": { "neutral": 1 }, "fit": { "oversized": 1 }, "pattern": { "solid": 1 }, "formality": 2 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1675442141157-70f996d77062", "page": "https://unsplash.com/photos/e0r4qE5vZPE", "credit": { "name": "Farshad Sheikhzadeh", "url": "https://unsplash.com/@farshadsheikhzadeh" }, "alt": "Man in an oversized white tee and denim jacket" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1632149877166-f75d49000351", "page": "https://unsplash.com/photos/iRAOJYtPHZE", "credit": { "name": "Reza Delkhosh", "url": "https://unsplash.com/@reza_delkhosh_" }, "alt": "Woman in an oversized white coat" } } },
+      { "style": "tailored",
+        "weights": { "archetypes": { "classic": 0.8, "smart-casual": 0.4 }, "palette": { "dark": 0.8, "neutral": 0.3 }, "fit": { "tailored": 1, "slim": 0.5 }, "pattern": { "solid": 1 }, "formality": 4 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1617137984095-74e4e5e3613f", "page": "https://unsplash.com/photos/HgyAIYvMWkw", "credit": { "name": "Mohamad Khosravi", "url": "https://unsplash.com/@mohamadkhosravi" }, "alt": "Man in a navy suit" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1616065297556-f05bc00c9a3e", "page": "https://unsplash.com/photos/6fAlS0h9vU8", "credit": { "name": "Olga Zhuravleva", "url": "https://unsplash.com/@zabegina" }, "alt": "Woman in a black blazer suit" } } },
+      { "style": "workwear",
+        "weights": { "archetypes": { "workwear": 1 }, "palette": { "earth": 1 }, "fit": { "relaxed": 0.8 }, "pattern": { "solid": 0.8 }, "formality": 2 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1608976198709-5e70a09b9ff0", "page": "https://unsplash.com/photos/7LUqBD0LW90", "credit": { "name": "Marcel Strauß", "url": "https://unsplash.com/@martzzl" }, "alt": "Man in a brown work jacket" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1557272891-6a7e15eee009", "page": "https://unsplash.com/photos/S8c_L20xayo", "credit": { "name": "Payton Tuttle", "url": "https://unsplash.com/@paytonctuttle" }, "alt": "Woman in a utility jacket" } } },
+      { "style": "soft and flowing",
+        "weights": { "archetypes": { "romantic": 0.7, "bohemian": 0.4, "minimal": 0.3 }, "palette": { "neutral": 1 }, "fit": { "relaxed": 1 }, "pattern": { "solid": 1 }, "formality": 2 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1782178392325-2d033dea7b3a", "page": "https://unsplash.com/photos/O06FePN81kY", "credit": { "name": "Anastase Maragos", "url": "https://unsplash.com/@visualsbyroyalz" }, "alt": "Man in loose white linen on a coastal path" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1721990336298-90832e791b5a", "page": "https://unsplash.com/photos/OqQ2hmalqnU", "credit": { "name": "Navyas Attires", "url": "https://unsplash.com/@navyasattires" }, "alt": "Woman in a flowing dress and hat" } } }
+    ] },
+    { "round": 5, "styles": [
+      { "style": "formal",
+        "weights": { "archetypes": { "classic": 1 }, "palette": { "dark": 1, "monochrome": 0.6 }, "fit": { "tailored": 1 }, "pattern": { "solid": 1 }, "formality": 5 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1617113930975-f9c7243ae527", "page": "https://unsplash.com/photos/YGJ9vfuwyUg", "credit": { "name": "Mohamad Khosravi", "url": "https://unsplash.com/@mohamadkhosravi" }, "alt": "Man in a black suit" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1623580674393-edf6eb7090f8", "page": "https://unsplash.com/photos/77iyep3uIjg", "credit": { "name": "Knight Duong", "url": "https://unsplash.com/@knightduong" }, "alt": "Woman in a black evening gown" } } },
+      { "style": "night out",
+        "weights": { "archetypes": { "smart-casual": 0.6, "edgy": 0.4 }, "palette": { "dark": 0.8 }, "fit": { "slim": 1 }, "pattern": { "subtle": 0.6, "solid": 0.5 }, "formality": 3 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1639210226623-147340bc761e", "page": "https://unsplash.com/photos/Mp1bxSsanKM", "credit": { "name": "Craig Chitima", "url": "https://unsplash.com/@cchitima" }, "alt": "Man in a striped shirt on a street at night" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1633926159079-b4402232c824", "page": "https://unsplash.com/photos/pmrVf7uj0-E", "credit": { "name": "Brock Wegner", "url": "https://unsplash.com/@isthatbrock" }, "alt": "Woman in a black dress on a street at night" } } },
+      { "style": "weekend",
+        "weights": { "archetypes": { "streetwear": 0.4, "smart-casual": 0.3, "minimal": 0.3 }, "palette": { "neutral": 0.7, "earth": 0.2 }, "fit": { "relaxed": 1 }, "pattern": { "solid": 1 }, "formality": 1 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1516257984-b1b4d707412e", "page": "https://unsplash.com/photos/UNSj7BtOK0Q", "credit": { "name": "Isaac Ramirez", "url": "https://unsplash.com/@isaaclramirez" }, "alt": "Man in a denim jacket" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1475178626620-a4d074967452", "page": "https://unsplash.com/photos/zDyJOj8ZXG0", "credit": { "name": "Tamara Bellis", "url": "https://unsplash.com/@tamarabellis" }, "alt": "Woman in jeans and a white top" } } },
+      { "style": "athletic",
+        "weights": { "archetypes": { "sporty": 1 }, "palette": { "bright": 0.5, "dark": 0.5 }, "fit": { "slim": 1 }, "pattern": { "solid": 0.7 }, "formality": 1 },
+        "photos": {
+          "menswear": { "image": "https://images.unsplash.com/photo-1554139844-af2fc8ad3a3a", "page": "https://unsplash.com/photos/zkctapwhzxc", "credit": { "name": "Florian Kurrasch", "url": "https://unsplash.com/@flnkrs" }, "alt": "Man jogging in black shorts and shirt" },
+          "womenswear": { "image": "https://images.unsplash.com/photo-1480179087180-d9f0ec044897", "page": "https://unsplash.com/photos/XCkRGOX2VgM", "credit": { "name": "Filip Mroz", "url": "https://unsplash.com/@mroz" }, "alt": "Woman running in athletic wear" } } }
+    ] }
+  ]
+}

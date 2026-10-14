@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
-import { boolean, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import type { StyleProfile } from "@/lib/style/profile";
 
 // SPEC.md §4. Only the tables Stage 3 needs; later stages add theirs.
 
@@ -12,6 +13,10 @@ export const users = pgTable("users", {
   name: text("name"),
   age: integer("age"),
   stylePreference: text("style_preference"), // free-form wardrobe conventions, not a gender switch
+  conventions: text("conventions").array().notNull().default(sql`'{}'::text[]`), // menswear / womenswear, any mix
+  styleProfile: jsonb("style_profile").$type<StyleProfile>(), // raw scores; summarize() for the readable view
+  activities: text("activities").array().notNull().default(sql`'{}'::text[]`), // the daily-outfit buttons
+  onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

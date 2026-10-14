@@ -1,17 +1,21 @@
 // Browser-side background removal: same model + preprocessing as rembg, same white 1024 canvas
 // as the local pipeline (pipeline/ownfit_pipeline/clean.py). Runs on the phone; no server cost.
 import * as ort from "onnxruntime-web/wasm";
+import { canvas, loadPhoto as loadImage, toBlob } from "@/lib/image";
 import { ACTIVE_BG_MODEL, BROWSER_MODELS } from "./bg-models";
 
+const MAX_INPUT = 1600; // keeps clean PNG + original JPEG under the 4.5 MB request limit
 const CANVAS = 1024;
 const MARGIN = 0.06;
-const MAX_INPUT = 1600; // keeps clean PNG + original JPEG under the 4.5 MB request limit
 const ALPHA_CUTOFF = 16; // matches clean.py's bbox threshold
 const MIN_CUTOUT = 0.01; // a cutout smaller than this share of the photo counts as "found nothing"
 ort.env.wasm.wasmPaths = "/ort/"; // self-hosted copy (scripts/copy-ort.mjs)
 ort.env.wasm.numThreads = 1; // threads need cross-origin isolation headers
 
-export { ort };
+export { canvas, ort, toBlob };
+
+/** Photo file -> upright canvas sized for background removal. */
+export const loadPhoto = (file: File) => loadImage(file, MAX_INPUT);
 
 const sessions = new Map<string, Promise<ort.InferenceSession>>();
 
@@ -34,28 +38,6 @@ export function preloadCutoutModel(): void {
 /** Tap-to-select models (about 14 MB): fetch while the user looks at the automatic cutout. */
 export function preloadTapModels(): void {
   for (const name of ["slimsam-encoder", "slimsam-decoder"]) loadModel(name).catch(() => {}); // surfaced again on use
-}
-
-export function canvas(w: number, h: number) {
-  const c = document.createElement("canvas");
-  c.width = w;
-  c.height = h;
-  c.getContext("2d")!.imageSmoothingQuality = "high"; // default "low" aliases on big downscales
-  return c;
-}
-
-export function toBlob(c: HTMLCanvasElement, type: string, quality?: number): Promise<Blob> {
-  return new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error("encode failed"))), type, quality));
-}
-
-/** Photo file -> upright canvas, at most MAX_INPUT on the long side. */
-export async function loadPhoto(file: File): Promise<HTMLCanvasElement> {
-  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const scale = Math.min(1, MAX_INPUT / Math.max(bitmap.width, bitmap.height));
-  const photo = canvas(Math.round(bitmap.width * scale), Math.round(bitmap.height * scale));
-  photo.getContext("2d")!.drawImage(bitmap, 0, 0, photo.width, photo.height);
-  bitmap.close();
-  return photo;
 }
 
 /** Alpha-only canvas (w x h) from model output laid out with `stride` values per row. */

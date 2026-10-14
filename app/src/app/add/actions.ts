@@ -1,7 +1,8 @@
 "use server";
 
 import { db } from "@/db";
-import { garments, users } from "@/db/schema";
+import { garments } from "@/db/schema";
+import { currentUser } from "@/db/user";
 import { requireAuth } from "@/lib/auth";
 import { validateTags, type GarmentTags } from "@/lib/catalog/vocabulary";
 import { and, eq } from "drizzle-orm";
@@ -28,8 +29,7 @@ export async function confirmDraft(draftId: string, input: GarmentTags): Promise
   if (errors.length) return { ok: false, error: errors.join("; ") };
   try {
     if (!(await objectExists(keys(draftId).image))) return { ok: false, error: "This photo expired. Add it again." };
-    const [existingUser] = await db.select().from(users).limit(1);
-    const user = existingUser ?? (await db.insert(users).values({}).returning())[0];
+    const user = await currentUser();
     const { image, source } = keys(draftId);
     await db.insert(garments).values({
       ...tags, name: tags.name.trim(), userId: user.id, imageKey: image, sourceImageKey: source,

@@ -1,0 +1,9 @@
+{
+  "archetypes": ["minimal", "classic", "smart-casual", "streetwear", "sporty", "bohemian", "edgy", "preppy", "romantic", "workwear"],
+  "palette": ["neutral", "earth", "dark", "bright", "pastel", "monochrome"],
+  "fit": ["tailored", "slim", "relaxed", "oversized"],
+  "pattern": ["solid", "subtle", "bold"],
+  "conventions": ["menswear", "womenswear"],
+  "activities": ["office", "outdoors", "gym", "night out", "formal", "casual", "travel"],
+  "limits": { "activities": 12, "activity_length": 30, "references": 6 }
+}

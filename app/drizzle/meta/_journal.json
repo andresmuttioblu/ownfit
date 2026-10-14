@@ -15,6 +15,13 @@
       "when": 1791924033966,
       "tag": "0001_garment_tombstone",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791987134196,
+      "tag": "0002_onboarding",
+      "breakpoints": true
     }
   ]
 }
