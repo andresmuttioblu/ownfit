@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TEMPS, type Weather } from "@/lib/outfits/filter";
 import { outfitsFor, setWeather, type TodayResult } from "./actions";
+import { localToday, OutfitCard } from "./outfit-card";
 
 const chip = (on: boolean) => `rounded-full border px-3 py-1 text-sm transition-colors ${on ? "border-foreground bg-foreground text-background" : "hover:bg-muted"}`;
 
@@ -33,7 +34,7 @@ export function Today({ activities, initialWeather }: { activities: string[]; in
     startTransition(async () => {
       let r: TodayResult;
       try {
-        r = await outfitsFor(a, weather);
+        r = await outfitsFor(a, weather, localToday());
       } catch (e) {
         console.error(e);
         r = { kind: "error", error: "Couldn't reach Ownfit. Check your connection and try again." };
@@ -71,12 +72,12 @@ export function Today({ activities, initialWeather }: { activities: string[]; in
       </section>
 
       {pending && <p className="text-muted-foreground" aria-live="polite">Putting outfits together…</p>}
-      {result && <Result result={result} />}
+      {result && activity && <Result result={result} activity={activity} weather={weather} />}
     </div>
   );
 }
 
-function Result({ result }: { result: TodayResult }) {
+function Result({ result, activity, weather }: { result: TodayResult; activity: string; weather: Weather }) {
   if (result.kind === "error") return <p role="alert" className="text-sm text-red-700">{result.error}</p>;
   if (result.kind === "missing") {
     return (
@@ -89,20 +90,8 @@ function Result({ result }: { result: TodayResult }) {
   return (
     <section className="flex flex-col gap-4" aria-live="polite">
       {result.needs.length > 0 && <p className="text-sm">You might need: {result.needs.join(", ")}</p>}
-      {result.outfits.map((o, i) => (
-        <article key={i} className="flex flex-col gap-2 rounded-xl border p-3">
-          <div className="grid grid-cols-3 gap-2">
-            {o.pieces.map((p) => (
-              <figure key={p.id} className="flex flex-col gap-1">
-                {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed R2 URL */}
-                <img src={p.imageUrl} alt={p.name} className="aspect-square w-full rounded-md border bg-white object-contain" />
-                <figcaption className="truncate text-xs text-muted-foreground">{p.name}</figcaption>
-              </figure>
-            ))}
-          </div>
-          <p className="text-sm">{o.why}</p>
-        </article>
-      ))}
+      <p className="text-xs text-muted-foreground">Tap a piece to set it aside for today, swap it or retire it.</p>
+      {result.outfits.map((o, i) => <OutfitCard key={i} outfit={o} activity={activity} weather={weather} />)}
       <p className="text-xs text-muted-foreground">Ready in {(result.ms / 1000).toFixed(1)} s</p>
     </section>
   );
