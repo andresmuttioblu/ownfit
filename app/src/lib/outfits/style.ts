@@ -64,7 +64,9 @@ function prompt(activity: string, weather: Weather, profile: StyleSummary | null
 type Answer = { outfits: { pieces: number[]; why: string }[]; needs: string[] };
 
 /** Valid, distinct outfits from the model's answer; invalid ones are dropped with a reason. */
-export function keepValid(answer: Answer, pieces: Piece[], weather: Weather, worn: string[][] = []): { outfits: Suggestion[]; rejected: string[] } {
+export function keepValid(
+  answer: Answer, pieces: Piece[], weather: Weather, worn: string[][] = [], mustInclude?: string,
+): { outfits: Suggestion[]; rejected: string[] } {
   const outfits: Suggestion[] = [];
   const rejected: string[] = [];
   const seen = new Set<string>();
@@ -74,6 +76,7 @@ export function keepValid(answer: Answer, pieces: Piece[], weather: Weather, wor
     const problems = outfitProblems(chosen, weather);
     if (problems.length) { rejected.push(problems.join(", ")); continue; }
     if (isRepeat(chosen.map((p) => p.id), worn)) { rejected.push("repeats an outfit worn recently"); continue; }
+    if (mustInclude && !chosen.some((p) => p.id === mustInclude)) { rejected.push("leaves out the piece it has to include"); continue; }
     const key = chosen.map((p) => p.id).sort().join();
     if (seen.has(key)) continue;
     seen.add(key);
@@ -113,14 +116,16 @@ function apiError(e: unknown): string | null {
 const NOT_CONFIGURED = "Outfit suggestions aren't configured (ANTHROPIC_API_KEY is missing).";
 
 export async function suggestOutfits(
-  activity: string, weather: Weather, profile: StyleSummary | null, pieces: Piece[], history: History = NO_HISTORY,
+  activity: string, weather: Weather, profile: StyleSummary | null, pieces: Piece[], history: History = NO_HISTORY, mustInclude?: string,
 ): Promise<StyleResult> {
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: NOT_CONFIGURED };
+  const must = pieces.findIndex((p) => p.id === mustInclude);
+  const mustLine = must >= 0 ? `\nEvery outfit must include piece ${must} (${pieces[must].name}).` : "";
   let feedback = "";
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      const answer = await ask<Answer>(SYSTEM, prompt(activity, weather, profile, pieces, history) + feedback, SCHEMA);
-      const { outfits, rejected } = keepValid(answer, pieces, weather, history.wornIds);
+      const answer = await ask<Answer>(SYSTEM, prompt(activity, weather, profile, pieces, history) + mustLine + feedback, SCHEMA);
+      const { outfits, rejected } = keepValid(answer, pieces, weather, history.wornIds, mustInclude);
       const needs = answer.needs.map((s) => s.trim().slice(0, 80)).filter(Boolean).slice(0, MAX_NEEDS);
       if (outfits.length) return { ok: true, outfits, needs };
       feedback = `\n\nYour previous outfits were all invalid (${rejected.join("; ")}). Follow the outfit rules exactly.`;
