@@ -187,7 +187,7 @@ export function AddGarment() {
           <p className="text-lg font-medium">Added {step.name || "your item"}.</p>
           <div className="flex gap-2">
             <Button onClick={() => setStep({ kind: "pick" })}>Add another</Button>
-            <Button variant="outline" render={<Link href="/catalog" />}>Open catalog</Button>
+            <Button variant="outline" nativeButton={false} render={<Link href="/catalog" />}>Open catalog</Button>
           </div>
         </div>
       )}

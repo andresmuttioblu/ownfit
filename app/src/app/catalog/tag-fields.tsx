@@ -5,7 +5,7 @@ import { CATEGORIES, VOCAB, type Category, type GarmentTags } from "@/lib/catalo
 
 const selectClass = "h-9 w-full rounded-md border bg-background px-2 text-sm disabled:opacity-50";
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
@@ -14,7 +14,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Chips({ options, value, onChange, max }: { options: string[]; value: string[] | undefined; onChange: (v: string[]) => void; max?: number }) {
+export function Chips({ options, value, onChange, max }: { options: string[]; value: string[] | undefined; onChange: (v: string[]) => void; max?: number }) {
   const current = value ?? [];
   return (
     <div className="flex flex-wrap gap-1.5">

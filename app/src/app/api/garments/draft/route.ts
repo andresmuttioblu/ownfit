@@ -4,39 +4,14 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { tagGarmentImage } from "@/lib/catalog/tag-image";
 import { deleteObject, putObject, signedGetUrl } from "@/lib/r2";
+import { hourlyLimiter, JPEG, PNG, readImage } from "@/lib/upload";
 
-const MAX_BYTES = 3_700_000; // base64 of this stays under Anthropic's 5 MB image limit; the client sends ~1 MB
 const CLEAN_SIDE = 1024; // the browser always sends a 1024x1024 cutout
-const MAX_DRAFTS_PER_HOUR = 60;
-// ponytail: per-instance limiter (serverless instances don't share it); the real cap is the
-// Anthropic workspace spend limit. Upgrade to a DB-backed counter if this ever matters.
-const recent: number[] = [];
-
-function overLimit(): boolean {
-  const hourAgo = Date.now() - 60 * 60 * 1000;
-  while (recent.length && recent[0] < hourAgo) recent.shift();
-  if (recent.length >= MAX_DRAFTS_PER_HOUR) return true;
-  recent.push(Date.now());
-  return false;
-}
+const overLimit = hourlyLimiter(60);
 
 function pngSize(bytes: Uint8Array): [number, number] {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   return [view.getUint32(16), view.getUint32(20)]; // IHDR width/height, big-endian
-}
-const PNG = [0x89, 0x50, 0x4e, 0x47];
-const JPEG = [0xff, 0xd8, 0xff];
-
-function startsWith(bytes: Uint8Array, magic: number[]) {
-  return magic.every((b, i) => bytes[i] === b);
-}
-
-async function readImage(form: FormData, field: string, magic: number[]): Promise<Uint8Array> {
-  const file = form.get(field);
-  if (!(file instanceof File) || file.size === 0 || file.size > MAX_BYTES) throw new Error(`${field}: missing or too large`);
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  if (!startsWith(bytes, magic)) throw new Error(`${field}: unexpected file type`);
-  return bytes;
 }
 
 export async function POST(request: Request) {

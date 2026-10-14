@@ -11,7 +11,8 @@
     "db:migrate": "drizzle-kit migrate",
     "catalog:upload": "tsx scripts/upload-catalog.ts",
     "models:upload": "tsx scripts/upload-models.ts",
-    "postinstall": "node scripts/copy-ort.mjs"
+    "postinstall": "node scripts/copy-ort.mjs",
+    "test": "tsx --test 'src/**/*.test.ts'"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",

@@ -26,7 +26,8 @@ function readJson<T>(file: string): T {
 async function main(dir: string) {
   // Imported after env loading so the DB client sees DATABASE_URL.
   const { db } = await import("../src/db");
-  const { garments, users } = await import("../src/db/schema");
+  const { garments } = await import("../src/db/schema");
+  const { currentUser } = await import("../src/db/user");
   const { putObject } = await import("../src/lib/r2");
   const { validateTags } = await import("../src/lib/catalog/vocabulary");
   const { and, eq } = await import("drizzle-orm");
@@ -35,8 +36,7 @@ async function main(dir: string) {
   if (!SAFE_ID.test(manifest.import_id)) throw new Error(`Unexpected import id: ${manifest.import_id}`);
   const tags = new Map(readJson<TagRecord[]>(path.join(dir, "tags.json")).map((t) => [t.id, t]));
 
-  const [existingUser] = await db.select().from(users).limit(1);
-  const user = existingUser ?? (await db.insert(users).values({}).returning())[0];
+  const user = await currentUser();
 
   let uploaded = 0, skipped = 0;
   const failed: string[] = [];
