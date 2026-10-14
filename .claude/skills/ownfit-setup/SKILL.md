@@ -96,7 +96,7 @@ Run these from the **repo root** (the Vercel project builds from `app/` via its 
 
 ## 6. Done
 
-Open the URL (or tell the user to). It asks for the passcode, then says **Ownfit is set up** and **Database: connected**. If it says "not reachable", re-check step 5.4.
+Open the URL (or tell the user to). It asks for the passcode, then shows **What are you doing today?** with a **Set up your style** card. If it says "Database not reachable", re-check step 5.4.
 
 ## Re-running
 

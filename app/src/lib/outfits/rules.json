@@ -1,0 +1,15 @@
+{
+  "$comment": "Baseline styling rules sent with every outfit request. Plain language; edit freely. They apply to every wardrobe.",
+  "rules": [
+    { "topic": "color", "rule": "Build around one or two main colors. Neutrals (black, white, grey, navy, beige, camel, denim) go with anything; pair at most one strong color with neutrals unless the person's palette leans bright." },
+    { "topic": "color", "rule": "Tonal outfits (shades of one color) and monochrome looks are deliberate and count as harmonious." },
+    { "topic": "pattern", "rule": "One bold pattern per outfit. Two patterns only if they differ in scale and share a color; solids anchor patterns." },
+    { "topic": "formality", "rule": "Keep pieces within one formality step of each other; shoes and outerwear set the tone, so match them to the occasion first." },
+    { "topic": "proportion", "rule": "Balance volume: a loose or oversized piece pairs with a fitted one. Fitted top with wide bottoms, or relaxed top with slim bottoms." },
+    { "topic": "proportion", "rule": "A cropped or short top works with high-waisted bottoms; a long top works over slim bottoms." },
+    { "topic": "fabric", "rule": "Heavy fabrics (wool, corduroy, velvet, fleece) for cool and cold days; light ones (linen, cotton, silk) for warm days. Don't mix summer-only fabrics with winter-only ones." },
+    { "topic": "weather", "rule": "Rain: skip suede and delicate fabrics, prefer closed shoes. Cold: closed shoes and layers. Hot: breathable, light colors." },
+    { "topic": "texture", "rule": "Mixing textures (knit with denim, leather with cotton) adds interest in an otherwise simple outfit." },
+    { "topic": "accessories", "rule": "Accessories are optional; add one or two at most, matching the outfit's metals and formality." }
+  ]
+}

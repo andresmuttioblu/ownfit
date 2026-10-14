@@ -22,6 +22,13 @@
       "when": 1791987134196,
       "tag": "0002_onboarding",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791992472827,
+      "tag": "0003_weather",
+      "breakpoints": true
     }
   ]
 }
