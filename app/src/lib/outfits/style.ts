@@ -46,16 +46,21 @@ function historyLines(h: History): string[] {
   ];
 }
 
-function prompt(activity: string, weather: Weather, profile: StyleSummary | null, pieces: Piece[], history: History): string {
+/** The style profile in one prompt line. */
+export function styleLine(profile: StyleSummary | null): string {
   const top = (d: Record<string, number> | undefined) => Object.keys(d ?? {}).slice(0, 4).join(", ") || "unknown";
+  return profile
+    ? `Style: leans ${top(profile.archetypes)}; colors ${top(profile.palette)}; fit ${top(profile.fit)}; patterns ${top(profile.pattern)}; formality lean ${profile.formalityLean ?? "unknown"}`
+    : "Style: no profile yet; keep it classic and versatile.";
+}
+
+function prompt(activity: string, weather: Weather, profile: StyleSummary | null, pieces: Piece[], history: History): string {
   const lines = pieces.slice(0, MAX_PIECES).map((p, i) =>
     `${i}. ${p.name} | ${p.category}/${p.subcategory} | ${p.colors.join("+")} | ${p.pattern} | ${p.material} | formality ${p.formality} | warmth ${p.warmth}`);
   return [
     `Activity: ${activity}`,
     `Weather: ${weather.temp}${weather.rain ? ", rain" : ""}`,
-    profile
-      ? `Style: leans ${top(profile.archetypes)}; colors ${top(profile.palette)}; fit ${top(profile.fit)}; patterns ${top(profile.pattern)}; formality lean ${profile.formalityLean ?? "unknown"}`
-      : "Style: no profile yet; keep it classic and versatile.",
+    styleLine(profile),
     ...historyLines(history),
     "Pieces:", ...lines,
   ].join("\n");
@@ -90,7 +95,7 @@ let client: Anthropic | null = null;
 class Refused extends Error {}
 
 /** One structured-output call; throws Refused when the model declines. */
-async function ask<T>(system: string, user: string, schema: Record<string, unknown>): Promise<T> {
+export async function ask<T>(system: string, user: string, schema: Record<string, unknown>): Promise<T> {
   client ??= new Anthropic({ timeout: 15_000, maxRetries: 1 }); // fail fast: someone is waiting on the screen
   const response = await client.messages.create({
     model: MODEL,
@@ -106,7 +111,7 @@ async function ask<T>(system: string, user: string, schema: Record<string, unkno
   return JSON.parse(text.text) as T;
 }
 
-function apiError(e: unknown): string | null {
+export function apiError(e: unknown): string | null {
   if (e instanceof Refused) return "No suggestions this time. Try another activity.";
   if (e instanceof Anthropic.AuthenticationError) return "The Anthropic API key is invalid.";
   if (e instanceof Anthropic.RateLimitError) return "Busy right now. Try again in a minute.";

@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { boolean, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import type { Weather } from "@/lib/outfits/filter";
+import type { BuyList } from "@/lib/lists/buy";
 import type { StyleProfile } from "@/lib/style/profile";
 
 // SPEC.md §4. Only the tables Stage 3 needs; later stages add theirs.
@@ -19,6 +20,7 @@ export const users = pgTable("users", {
   activities: text("activities").array().notNull().default(sql`'{}'::text[]`), // the daily-outfit buttons
   onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
   weather: jsonb("weather").$type<Weather>(), // set by hand on the home screen; null = mild, dry
+  buyList: jsonb("buy_list").$type<BuyList>(), // the last generated buy list; regenerated on request
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -48,6 +50,7 @@ export const garments = pgTable(
     retiredAt: timestamp("retired_at", { withTimezone: true }),
     retireReason: retireReason("retire_reason"),
     notTodayOn: date("not_today_on"), // "not today": hidden on this local date only, back the next day
+    keptUntil: date("kept_until"), // "keep" on the sell-or-donate list: not suggested again before this date
   },
   (t) => [uniqueIndex("garments_import_item").on(t.importId, t.importItemId)],
 );
