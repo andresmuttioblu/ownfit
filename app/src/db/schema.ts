@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { boolean, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import type { Weather } from "@/lib/outfits/filter";
 import type { StyleProfile } from "@/lib/style/profile";
 
 // SPEC.md §4. Only the tables Stage 3 needs; later stages add theirs.
@@ -17,6 +18,7 @@ export const users = pgTable("users", {
   styleProfile: jsonb("style_profile").$type<StyleProfile>(), // raw scores; summarize() for the readable view
   activities: text("activities").array().notNull().default(sql`'{}'::text[]`), // the daily-outfit buttons
   onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
+  weather: jsonb("weather").$type<Weather>(), // set by hand on the home screen; null = mild, dry
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
