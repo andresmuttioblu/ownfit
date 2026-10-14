@@ -77,7 +77,7 @@ export function Today({ activities, initialWeather }: { activities: string[]; in
   );
 }
 
-function Result({ result, activity, weather }: { result: TodayResult; activity: string; weather: Weather }) {
+export function Result({ result, activity, weather }: { result: TodayResult; activity: string; weather: Weather }) {
   if (result.kind === "error") return <p role="alert" className="text-sm text-red-700">{result.error}</p>;
   if (result.kind === "missing") {
     return (

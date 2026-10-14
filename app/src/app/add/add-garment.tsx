@@ -8,6 +8,8 @@ import type { Cutout } from "@/lib/catalog/cutout";
 import type { GarmentTags } from "@/lib/catalog/vocabulary";
 import { confirmDraft, discardDraft } from "./actions";
 import { TapSelect } from "./tap-select";
+import { Unlocks } from "./unlocks";
+import type { Unlock, Weather } from "@/lib/outfits/filter";
 
 const EMPTY_TAGS: GarmentTags = {
   name: "", category: "top", subcategory: "other", colors: [], pattern: "solid", material: "other",
@@ -23,7 +25,7 @@ type Step =
   | { kind: "check"; shot: Shot }
   | { kind: "tap"; shot: Shot }
   | { kind: "confirm"; draft: Draft }
-  | { kind: "saved"; name: string };
+  | { kind: "saved"; name: string; category: string; garmentId: string; unlocks: Unlock[] };
 
 async function makeShot(file: File): Promise<Shot> {
   const { autoMask, loadPhoto, onWhite, preloadTapModels, toBlob } = await import("@/lib/catalog/cutout"); // browser-only (onnxruntime-web)
@@ -56,7 +58,7 @@ async function createDraft({ original, cutout }: Shot): Promise<Draft> {
   return { draftId: body.draftId, imageUrl: body.imageUrl, tags: body.tags ?? EMPTY_TAGS, warnings };
 }
 
-export function AddGarment() {
+export function AddGarment({ weather }: { weather: Weather }) {
   const [step, setStep] = useState<Step>({ kind: "pick" });
   const [tags, setTags] = useState<GarmentTags>(EMPTY_TAGS);
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +121,7 @@ export function AddGarment() {
     setError(null);
     startTransition(async () => {
       const result = await confirmDraft(draft.draftId, tags);
-      if (result.ok) setStep({ kind: "saved", name: tags.name });
+      if (result.ok) setStep({ kind: "saved", name: tags.name, category: tags.category, garmentId: result.garmentId, unlocks: result.unlocks });
       else setError(result.error);
     });
   }
@@ -185,6 +187,7 @@ export function AddGarment() {
       {step.kind === "saved" && (
         <div className="flex flex-col items-center gap-3 py-8 text-center">
           <p className="text-lg font-medium">Added {step.name || "your item"}.</p>
+          <Unlocks garmentId={step.garmentId} category={step.category} unlocks={step.unlocks} weather={weather} />
           <div className="flex gap-2">
             <Button onClick={() => setStep({ kind: "pick" })}>Add another</Button>
             <Button variant="outline" nativeButton={false} render={<Link href="/catalog" />}>Open catalog</Button>

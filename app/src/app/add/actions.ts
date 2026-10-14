@@ -6,12 +6,14 @@ import { currentUser } from "@/db/user";
 import { requireAuth } from "@/lib/auth";
 import { validateTags, type GarmentTags } from "@/lib/catalog/vocabulary";
 import { and, eq } from "drizzle-orm";
+import { unlocks, type Unlock } from "@/lib/outfits/filter";
+import STYLE_VOCAB from "@/lib/style/style-vocab.json";
 import { deleteObject, objectExists } from "@/lib/r2";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const FIELDS = ["name", "category", "subcategory", "colors", "pattern", "material", "formality", "warmth", "seasons", "tags"] as const;
 
-export type AddResult = { ok: true } | { ok: false; error: string };
+export type AddResult = { ok: true; garmentId: string; unlocks: Unlock[] } | { ok: false; error: string };
 
 const keys = (draftId: string) => ({ image: `garments/single/${draftId}.png`, source: `sources/single/${draftId}.jpg` });
 
@@ -35,7 +37,11 @@ export async function confirmDraft(draftId: string, input: GarmentTags): Promise
       ...tags, name: tags.name.trim(), userId: user.id, imageKey: image, sourceImageKey: source,
       source: "single_add", importId: "single", importItemId: draftId,
     }).onConflictDoNothing(); // a retried confirm whose first response was lost
-    return { ok: true };
+    const closet = await db.select().from(garments).where(and(eq(garments.userId, user.id), eq(garments.status, "active")));
+    const added = closet.find((g) => g.importId === "single" && g.importItemId === draftId);
+    if (!added) return { ok: false, error: "Saving failed. Please try again." };
+    const activities = user.activities.length ? user.activities : STYLE_VOCAB.activities;
+    return { ok: true, garmentId: added.id, unlocks: unlocks(closet, added, activities) };
   } catch (e) {
     console.error("confirm draft failed", e);
     return { ok: false, error: "Saving failed. Please try again." };

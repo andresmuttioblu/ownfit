@@ -61,3 +61,15 @@ test("an outfit must be complete and not double up", () => {
   assert.deepEqual(outfitProblems([tee, jeans, sneakers, denimJacket, parka], { temp: "cold", rain: false }), []); // jacket under a coat
   assert.ok(outfitProblems([tee, jeans, sneakers, denimJacket], { temp: "cold", rain: false }).length); // jacket alone is too light
 });
+
+test("a new piece reports the outfits it adds per activity, and which activities it opens up", async () => {
+  const { unlocks } = await import("./filter");
+  const loafers = piece("shoes", 3, 2, "loafers");
+  const shirt = piece("top", 3, 2, "shirt");
+  assert.deepEqual(unlocks([shirt, suitTrousers, jeans, tee, loafers], loafers, ["office", "casual", "gym"]), [
+    { activity: "office", outfits: 1, isNew: true }, // shirt + suit trousers; there were no shoes before
+    { activity: "casual", outfits: 2, isNew: true }, // tee or shirt with jeans
+  ]); // gym: loafers are too formal
+  assert.deepEqual(unlocks([shirt, suitTrousers, jeans, tee, sneakers, loafers], loafers, ["office"]),
+    [{ activity: "office", outfits: 1, isNew: false }]); // sneakers already made an office outfit
+});

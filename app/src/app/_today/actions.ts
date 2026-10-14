@@ -6,7 +6,7 @@ import { garments, outfitEvents, users } from "@/db/schema";
 import { currentUser } from "@/db/user";
 import { requireAuth } from "@/lib/auth";
 import { applyFeedback, isAvailableOn, isLocalDate } from "@/lib/outfits/feedback";
-import { candidatesFor, missingPieces, TEMPS, type Piece, type Weather } from "@/lib/outfits/filter";
+import { candidatesFor, missingPieces, outfitsWith, TEMPS, type Piece, type Weather } from "@/lib/outfits/filter";
 import { suggestOutfits, swapPiece as styleSwap, type History } from "@/lib/outfits/style";
 import { signedGetUrl } from "@/lib/r2";
 import { hourlyLimiter } from "@/lib/upload";
@@ -86,24 +86,33 @@ async function toOutfitPiece(p: ClosetPiece): Promise<OutfitPiece> {
   return { id: p.id, name: p.name, category: p.category, imageUrl: await signedGetUrl(p.imageKey) };
 }
 
-/** Outfits for one activity (a button, or free text from "something else") in the weather shown on screen, on the phone's date. */
-export async function outfitsFor(activity: string, weather: Weather, today: string): Promise<TodayResult> {
+/** Outfits for one activity (a button, or free text from "something else") in the weather shown on screen, on the phone's date.
+ *  mustInclude: every outfit has this piece (right after adding it). */
+export async function outfitsFor(activity: string, weather: Weather, today: string, mustInclude?: string): Promise<TodayResult> {
   const started = Date.now();
   if (!(await signedIn())) return { kind: "error", error: SESSION_EXPIRED };
   if (!isActivity(activity)) return { kind: "error", error: `Describe the activity in up to ${MAX_ACTIVITY} characters.` };
   if (!isWeather(weather)) return { kind: "error", error: "Pick today's weather first." };
   if (!isLocalDate(today)) return { kind: "error", error: "Your phone's date looks wrong. Reload and try again." };
+  if (mustInclude !== undefined && (typeof mustInclude !== "string" || !UUID.test(mustInclude))) return { kind: "error", error: FAILED };
   if (overLimit()) return { kind: "error", error: "That's a lot of outfits in an hour. Try again later." };
   try {
     const user = await currentUser();
     const closet = (await activeCloset(user.id)).filter((g) => isAvailableOn(g, today));
-    const candidates = candidatesFor(closet, activity, weather);
+    let candidates = candidatesFor(closet, activity, weather);
+    if (mustInclude) {
+      const piece = candidates.find((p) => p.id === mustInclude);
+      const weatherWords = `${weather.temp}${weather.rain ? ", rainy" : ""} weather`;
+      if (!piece) return { kind: "error", error: `It doesn't suit ${activity.trim()} in ${weatherWords}.` };
+      if (!outfitsWith(candidates, piece)) return { kind: "error", error: `It doesn't make a complete ${activity.trim()} outfit in ${weatherWords}.` };
+      candidates = [piece, ...candidates.filter((p) => p !== piece)]; // first, so it's never cut from a long list
+    }
     const missing = missingPieces(candidates, weather);
     if (missing.length) return { kind: "missing", missing, activity: activity.trim(), weather };
 
     const history = await historyFor(user.id, today, new Map(closet.map((g) => [g.id, g])));
     const profile = user.styleProfile ? summarize(user.styleProfile) : null;
-    const result = await suggestOutfits(activity.trim(), weather, profile, candidates, history);
+    const result = await suggestOutfits(activity.trim(), weather, profile, candidates, history, mustInclude);
     if (!result.ok) return { kind: "error", error: result.error };
     const byId = new Map(closet.map((g) => [g.id, g]));
     const outfits = await Promise.all(result.outfits.map(async (o) => ({

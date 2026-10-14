@@ -1,5 +1,17 @@
+import { Suspense } from "react";
+import { connection } from "next/server";
 import Link from "next/link";
+import { currentUser } from "@/db/user";
+import { requireAuth } from "@/lib/auth";
+import { DEFAULT_WEATHER } from "@/lib/outfits/filter";
 import { AddGarment } from "./add-garment";
+
+async function Add() {
+  await connection();
+  await requireAuth();
+  const user = await currentUser().catch((e) => { console.error("add: database not reachable", e); return null; });
+  return <AddGarment weather={user?.weather ?? DEFAULT_WEATHER} />;
+}
 
 export default function AddPage() {
   return (
@@ -8,7 +20,7 @@ export default function AddPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Add an item</h1>
         <Link href="/catalog" className="text-sm text-muted-foreground hover:underline">Catalog</Link>
       </header>
-      <AddGarment />
+      <Suspense fallback={<p className="text-muted-foreground">Loading…</p>}><Add /></Suspense>
     </main>
   );
 }

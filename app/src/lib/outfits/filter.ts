@@ -43,11 +43,14 @@ function formalEnough(p: Piece, [lo, hi]: [number, number]): boolean {
   return p.formality >= lo - slack && p.formality <= hi + slack;
 }
 
+/** Whether a piece suits the activity, whatever the weather. */
+export function fitsActivity(p: Piece, activity: string): boolean {
+  return (p.category !== "swimwear" || isCustom(activity)) && formalEnough(p, formalityRange(activity));
+}
+
 /** Pieces that suit today's activity and weather. */
-export function candidatesFor(pieces: Piece[], activity: string, w: Weather): Piece[] {
-  const range = formalityRange(activity);
-  const swimOk = isCustom(activity);
-  return pieces.filter((p) => (p.category !== "swimwear" || swimOk) && warmEnough(p, w) && formalEnough(p, range));
+export function candidatesFor<T extends Piece>(pieces: T[], activity: string, w: Weather): T[] {
+  return pieces.filter((p) => fitsActivity(p, activity) && warmEnough(p, w));
 }
 
 const has = (pieces: Piece[], ...categories: string[]) => pieces.some((p) => categories.includes(p.category));
@@ -81,4 +84,32 @@ export function outfitProblems(pieces: Piece[], w: Weather): string[] {
   if (needsOuterwear(w) && !pieces.some((p) => warmCoat(p, w))) problems.push("needs a coat or jacket warm enough for today");
   if (new Set(pieces.map((p) => p.id)).size !== pieces.length) problems.push("repeats a piece");
   return problems;
+}
+
+const BASES = new Set(["dress", "one-piece", "swimwear"]);
+
+/** Complete outfits (a top and bottom or a dress, plus shoes) that include this piece; layers and extras go with any of them. */
+export function outfitsWith(pieces: Piece[], piece: Piece): number {
+  const n = (c: string) => pieces.filter((p) => p.category === c && p.id !== piece.id).length;
+  const dresses = pieces.filter((p) => BASES.has(p.category) && p.id !== piece.id).length;
+  const bases = n("top") * n("bottom") + dresses;
+  if (piece.category === "top") return n("bottom") * n("shoes");
+  if (piece.category === "bottom") return n("top") * n("shoes");
+  if (BASES.has(piece.category)) return n("shoes");
+  if (piece.category === "shoes") return bases;
+  return bases * n("shoes");
+}
+
+export type Unlock = { activity: string; outfits: number; isNew: boolean };
+
+/** What a new piece adds per activity, ignoring weather: outfits it's part of, and whether the activity had none before. */
+export function unlocks(closet: Piece[], piece: Piece, activities: string[]): Unlock[] {
+  return activities.flatMap((activity) => {
+    if (!fitsActivity(piece, activity)) return [];
+    const others = closet.filter((p) => p.id !== piece.id && fitsActivity(p, activity));
+    const outfits = outfitsWith([...others, piece], piece);
+    if (!outfits) return [];
+    const hadAny = others.some((p) => outfitsWith(others, p) > 0);
+    return [{ activity, outfits, isNew: !hadAny }];
+  });
 }
