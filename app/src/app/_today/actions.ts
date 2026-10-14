@@ -6,56 +6,26 @@ import { garments, outfitEvents, users } from "@/db/schema";
 import { currentUser } from "@/db/user";
 import { requireAuth } from "@/lib/auth";
 import { applyFeedback, isAvailableOn, isLocalDate } from "@/lib/outfits/feedback";
-import { candidatesFor, missingPieces, outfitsWith, TEMPS, type Piece, type Weather } from "@/lib/outfits/filter";
+import { candidatesFor, missingPieces, outfitsWith, type Piece, type Weather } from "@/lib/outfits/filter";
 import { suggestOutfits, swapPiece as styleSwap, type History } from "@/lib/outfits/style";
-import { signedGetUrl } from "@/lib/r2";
 import { hourlyLimiter } from "@/lib/upload";
+import {
+  activeCloset, FAILED, isActivity, isIdList, isWeather, MAX_ACTIVITY, SESSION_EXPIRED, signedIn, toOutfitPiece, UUID,
+  type ClosetPiece, type Outfit, type OutfitPiece,
+} from "./closet";
 import { summarize } from "@/lib/style/profile";
 
-const MAX_ACTIVITY = 80;
-const MAX_OUTFIT_PIECES = 12;
 const REPEAT_DAYS = 7; // an outfit worn this recently isn't suggested again as-is
 const FEEDBACK_IN_PROMPT = 10;
 const overLimit = hourlyLimiter(60); // the Anthropic spend limit is the real cap
 
-export type OutfitPiece = { id: string; name: string; category: string; imageUrl: string };
-export type Outfit = { pieces: OutfitPiece[]; why: string };
 export type TodayResult =
   | { kind: "outfits"; outfits: Outfit[]; needs: string[]; ms: number }
   | { kind: "missing"; missing: string[]; activity: string; weather: Weather } // the closet can't make a complete outfit for this
   | { kind: "error"; error: string };
+export type { Outfit, OutfitPiece };
 export type ActionResult = { ok: true } | { ok: false; error: string };
 export type SwapResult = { ok: true; piece: OutfitPiece } | { ok: false; error: string };
-
-const SESSION_EXPIRED = "Your session expired. Reload and sign in again.";
-const FAILED = "Something went wrong. Try again.";
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-const isWeather = (w: unknown): w is Weather =>
-  typeof w === "object" && w !== null && TEMPS.includes((w as Weather).temp) && typeof (w as Weather).rain === "boolean";
-const isActivity = (a: unknown): a is string => typeof a === "string" && !!a.trim() && a.trim().length <= MAX_ACTIVITY;
-const isIdList = (ids: unknown): ids is string[] =>
-  Array.isArray(ids) && ids.length > 0 && ids.length <= MAX_OUTFIT_PIECES && ids.every((id) => typeof id === "string" && UUID.test(id));
-
-async function signedIn(): Promise<boolean> {
-  try {
-    await requireAuth();
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-type ClosetPiece = Piece & { imageKey: string; notTodayOn: string | null; status: string };
-
-/** The user's active garments, as the outfit engine sees them; withRetired also returns retired ones. */
-async function activeCloset(userId: string, withRetired = false): Promise<ClosetPiece[]> {
-  return db.select({
-    id: garments.id, name: garments.name, category: garments.category, subcategory: garments.subcategory,
-    colors: garments.colors, pattern: garments.pattern, material: garments.material,
-    formality: garments.formality, warmth: garments.warmth, imageKey: garments.imageKey, notTodayOn: garments.notTodayOn, status: garments.status,
-  }).from(garments).where(and(eq(garments.userId, userId), inArray(garments.status, withRetired ? ["active", "retired"] : ["active"])));
-}
 
 const daysBefore = (date: string, days: number) => new Date(Date.parse(`${date}T00:00:00Z`) - days * 86_400_000).toISOString().slice(0, 10);
 
@@ -80,10 +50,6 @@ async function nudgeProfile(userId: string, pieces: Piece[], sign: 1 | -1 | -0.5
   // ponytail: no row lock (neon-http has no interactive transactions); two taps within ms can drop one nudge
   const [row] = await db.select({ profile: users.styleProfile }).from(users).where(eq(users.id, userId));
   if (row?.profile) await db.update(users).set({ styleProfile: applyFeedback(row.profile, pieces, sign) }).where(eq(users.id, userId));
-}
-
-async function toOutfitPiece(p: ClosetPiece): Promise<OutfitPiece> {
-  return { id: p.id, name: p.name, category: p.category, imageUrl: await signedGetUrl(p.imageKey) };
 }
 
 /** Outfits for one activity (a button, or free text from "something else") in the weather shown on screen, on the phone's date.

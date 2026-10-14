@@ -58,8 +58,9 @@ async function createDraft({ original, cutout }: Shot): Promise<Draft> {
   return { draftId: body.draftId, imageUrl: body.imageUrl, tags: body.tags ?? EMPTY_TAGS, warnings };
 }
 
-export function AddGarment({ weather }: { weather: Weather }) {
-  const [step, setStep] = useState<Step>({ kind: "pick" });
+/** initialFile: start from this photo right away (an item bought from the fitting room). */
+export function AddGarment({ weather, initialFile }: { weather: Weather; initialFile?: File }) {
+  const [step, setStep] = useState<Step>(initialFile ? { kind: "working", message: "Removing the background…" } : { kind: "pick" });
   const [tags, setTags] = useState<GarmentTags>(EMPTY_TAGS);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -91,6 +92,13 @@ export function AddGarment({ weather }: { weather: Weather }) {
       if (inputRef.current) inputRef.current.value = "";
     }
   }
+
+  const started = useRef(false);
+  useEffect(() => {
+    if (!initialFile || started.current) return; // once, even under Strict Mode's double effects
+    started.current = true;
+    makeShot(initialFile).then((shot) => setStep({ kind: "check", shot }), fail);
+  }, [initialFile]);
 
   function retake(shot: Shot) {
     release(shot);

@@ -30,7 +30,10 @@ async function Home() {
         </Link>
       )}
       <Today activities={user.activities.length ? user.activities : STYLE_VOCAB.activities} initialWeather={user.weather ?? DEFAULT_WEATHER} />
-      <Link href="/add" className="text-center text-sm text-muted-foreground hover:underline">Bought something new? Add it</Link>
+      <div className="flex justify-center gap-4 text-sm text-muted-foreground">
+        <Link href="/fitting-room" className="hover:underline">Thinking of buying something?</Link>
+        <Link href="/add" className="hover:underline">Bought something new?</Link>
+      </div>
     </>
   );
 }
