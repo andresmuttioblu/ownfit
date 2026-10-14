@@ -11,34 +11,64 @@ const MIN_CUTOUT = 0.01; // a cutout smaller than this share of the photo counts
 ort.env.wasm.wasmPaths = "/ort/"; // self-hosted copy (scripts/copy-ort.mjs)
 ort.env.wasm.numThreads = 1; // threads need cross-origin isolation headers
 
-let session: Promise<ort.InferenceSession> | null = null;
+export { ort };
 
-function loadSession(): Promise<ort.InferenceSession> {
-  session ??= ort.InferenceSession.create("/api/bg-model", { executionProviders: ["wasm"] }).catch((e) => {
-    session = null; // let a retry try again
-    throw e;
-  });
-  return session;
+const sessions = new Map<string, Promise<ort.InferenceSession>>();
+
+/** One cached session per model file (served by /api/bg-model). */
+export function loadModel(name: string): Promise<ort.InferenceSession> {
+  if (!sessions.has(name)) {
+    sessions.set(name, ort.InferenceSession.create(`/api/bg-model?name=${name}`, { executionProviders: ["wasm"] }).catch((e) => {
+      sessions.delete(name); // let a retry try again
+      throw e;
+    }));
+  }
+  return sessions.get(name)!;
 }
 
 /** Start the (possibly large) model download early, e.g. when the page opens. */
 export function preloadCutoutModel(): void {
-  loadSession().catch(() => {}); // surfaced again when cutOut() runs
+  loadModel(ACTIVE_BG_MODEL).catch(() => {}); // surfaced again when autoMask() runs
 }
 
-function canvas(w: number, h: number) {
+/** Tap-to-select models (about 14 MB): fetch while the user looks at the automatic cutout. */
+export function preloadTapModels(): void {
+  for (const name of ["slimsam-encoder", "slimsam-decoder"]) loadModel(name).catch(() => {}); // surfaced again on use
+}
+
+export function canvas(w: number, h: number) {
   const c = document.createElement("canvas");
-  c.getContext("2d")!.imageSmoothingQuality = "high"; // default "low" aliases on big downscales
   c.width = w;
   c.height = h;
+  c.getContext("2d")!.imageSmoothingQuality = "high"; // default "low" aliases on big downscales
   return c;
 }
 
-function toBlob(c: HTMLCanvasElement, type: string, quality?: number): Promise<Blob> {
+export function toBlob(c: HTMLCanvasElement, type: string, quality?: number): Promise<Blob> {
   return new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error("encode failed"))), type, quality));
 }
 
-function inputTensor(photo: HTMLCanvasElement) {
+/** Photo file -> upright canvas, at most MAX_INPUT on the long side. */
+export async function loadPhoto(file: File): Promise<HTMLCanvasElement> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const scale = Math.min(1, MAX_INPUT / Math.max(bitmap.width, bitmap.height));
+  const photo = canvas(Math.round(bitmap.width * scale), Math.round(bitmap.height * scale));
+  photo.getContext("2d")!.drawImage(bitmap, 0, 0, photo.width, photo.height);
+  bitmap.close();
+  return photo;
+}
+
+/** Alpha-only canvas (w x h) from model output laid out with `stride` values per row. */
+export function maskCanvas(values: Float32Array, w: number, h: number, stride: number, toAlpha: (v: number) => number) {
+  const m = canvas(w, h);
+  const img = m.getContext("2d")!.createImageData(w, h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) img.data[(y * w + x) * 4 + 3] = toAlpha(values[y * stride + x]);
+  m.getContext("2d")!.putImageData(img, 0, 0);
+  return m;
+}
+
+/** Automatic mask of the photo's main subject, rembg-style. */
+export async function autoMask(photo: HTMLCanvasElement): Promise<HTMLCanvasElement> {
   const { size, mean, std } = BROWSER_MODELS[ACTIVE_BG_MODEL];
   const small = canvas(size, size);
   small.getContext("2d")!.drawImage(photo, 0, 0, size, size);
@@ -50,67 +80,50 @@ function inputTensor(photo: HTMLCanvasElement) {
   for (let p = 0; p < plane; p++) {
     for (let c = 0; c < 3; c++) chw[c * plane + p] = (data[p * 4 + c] / max - mean[c]) / std[c];
   }
-  return new ort.Tensor("float32", chw, [1, 3, size, size]);
-}
-
-function maskCanvas(pred: Float32Array, size: number) {
+  const sess = await loadModel(ACTIVE_BG_MODEL);
+  const out = await sess.run({ [sess.inputNames[0]]: new ort.Tensor("float32", chw, [1, 3, size, size]) });
+  const pred = (out[sess.outputNames[0]].data as Float32Array).subarray(0, plane); // channel 0
   let lo = Infinity, hi = -Infinity;
   for (const v of pred) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
   const range = hi - lo || 1;
-  const m = canvas(size, size);
-  const img = m.getContext("2d")!.createImageData(size, size);
-  for (let p = 0; p < size * size; p++) {
-    const a = Math.round(((pred[p] - lo) / range) * 255);
-    img.data.set([0, 0, 0, a], p * 4);
-  }
-  m.getContext("2d")!.putImageData(img, 0, 0);
-  return m;
+  return maskCanvas(pred, size, size, size, (v) => Math.round(((v - lo) / range) * 255));
 }
 
-export type Cutout = { clean: Blob; original: Blob; isBlank: boolean };
+export type Cutout = { clean: Blob; isBlank: boolean };
 
-/** Photo file -> garment on a white square (PNG) + the downscaled original (JPEG). */
-export async function cutOut(file: File): Promise<Cutout> {
-  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const scale = Math.min(1, MAX_INPUT / Math.max(bitmap.width, bitmap.height));
-  const w = Math.round(bitmap.width * scale), h = Math.round(bitmap.height * scale);
-  const photo = canvas(w, h);
-  photo.getContext("2d")!.drawImage(bitmap, 0, 0, w, h);
-  bitmap.close();
+/** Photo + mask (any resolution, stretched over the photo) -> item on a white 1024 square (PNG). */
+export async function onWhite(photo: HTMLCanvasElement, mask: HTMLCanvasElement): Promise<Cutout> {
+  const { width: w, height: h } = photo;
+  // Bounding box on the small mask, scaled up.
+  const alpha = mask.getContext("2d")!.getImageData(0, 0, mask.width, mask.height).data;
+  let x0 = mask.width, y0 = mask.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < mask.height; y++) for (let x = 0; x < mask.width; x++) {
+    if (alpha[(y * mask.width + x) * 4 + 3] > ALPHA_CUTOFF) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  }
+  const found = x1 >= x0 && y1 >= y0;
+  // Upscaling spreads the edge about one mask pixel outward: grow the box so the soft fringe isn't clipped.
+  if (found) { x0 = Math.max(0, x0 - 1); y0 = Math.max(0, y0 - 1); x1 = Math.min(mask.width - 1, x1 + 1); y1 = Math.min(mask.height - 1, y1 + 1); }
+  const sx = w / mask.width, sy = h / mask.height;
+  const bx = found ? x0 * sx : 0, by = found ? y0 * sy : 0;
+  const bw = found ? (x1 - x0 + 1) * sx : w, bh = found ? (y1 - y0 + 1) * sy : h;
+  const isBlank = !found || bw * bh < MIN_CUTOUT * w * h;
 
-  const sess = await loadSession();
-  const out = await sess.run({ [sess.inputNames[0]]: inputTensor(photo) });
-  const size = BROWSER_MODELS[ACTIVE_BG_MODEL].size;
-  const pred = (out[sess.outputNames[0]].data as Float32Array).subarray(0, size * size); // channel 0
-
-  // Photo with the mask as its alpha channel, at full photo size.
+  // Photo with the mask as its alpha channel.
   const cut = canvas(w, h);
   const ctx = cut.getContext("2d")!;
-  ctx.drawImage(maskCanvas(pred, size), 0, 0, w, h);
+  ctx.drawImage(mask, 0, 0, w, h);
   ctx.globalCompositeOperation = "source-in";
   ctx.drawImage(photo, 0, 0);
 
-  // Bounding box of the garment.
-  const alpha = ctx.getImageData(0, 0, w, h).data;
-  let x0 = w, y0 = h, x1 = -1, y1 = -1;
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    if (alpha[(y * w + x) * 4 + 3] > ALPHA_CUTOFF) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
-  }
-  const found = x1 >= x0 && y1 >= y0;
-  const bw = found ? x1 - x0 + 1 : w, bh = found ? y1 - y0 + 1 : h;
-  const isBlank = !found || bw * bh < MIN_CUTOUT * w * h;
-
   const inner = CANVAS * (1 - 2 * MARGIN);
   const fit = Math.min(inner / bw, inner / bh);
-  const out2 = canvas(CANVAS, CANVAS);
-  const o = out2.getContext("2d")!;
+  const out = canvas(CANVAS, CANVAS);
+  const o = out.getContext("2d")!;
   o.fillStyle = "#fff";
   o.fillRect(0, 0, CANVAS, CANVAS);
-  o.imageSmoothingQuality = "high";
-  o.drawImage(cut, found ? x0 : 0, found ? y0 : 0, bw, bh,
-    (CANVAS - bw * fit) / 2, (CANVAS - bh * fit) / 2, bw * fit, bh * fit);
+  o.drawImage(cut, bx, by, bw, bh, (CANVAS - bw * fit) / 2, (CANVAS - bh * fit) / 2, bw * fit, bh * fit);
 
-  const result = { clean: await toBlob(out2, "image/png"), original: await toBlob(photo, "image/jpeg", 0.85), isBlank };
-  for (const c of [photo, cut, out2]) c.width = c.height = 0; // iOS Safari frees canvas memory late
-  return result;
+  const clean = await toBlob(out, "image/png");
+  for (const c of [cut, out]) c.width = c.height = 0; // iOS Safari frees canvas memory late
+  return { clean, isBlank };
 }
