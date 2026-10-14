@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { asc, desc, eq } from "drizzle-orm";
-import { ChevronRight, HandHeart, Plus, ShoppingBag } from "lucide-react";
+import { ChevronRight, HandHeart, Luggage, Plus, ShoppingBag } from "lucide-react";
 import { db } from "@/db";
 import { garments } from "@/db/schema";
 import { Skeleton } from "@/components/garment-tile";
@@ -15,6 +15,7 @@ import { CatalogReview, type CatalogItem } from "./catalog-review";
 const LISTS = [
   { href: "/catalog/buy", label: "Buy list", hint: "Pieces that would unlock the most outfits", icon: ShoppingBag },
   { href: "/catalog/let-go", label: "Sell or donate", hint: "Unworn, unloved and duplicates", icon: HandHeart },
+  { href: "/catalog/trip", label: "Pack for a trip", hint: "A small capsule and a plan for each day", icon: Luggage },
 ] as const;
 
 async function Catalog() {
