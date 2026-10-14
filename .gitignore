@@ -12,3 +12,4 @@ build/
 # Pipeline output (your wardrobe photos stay on your machine)
 /output/
 /imports/
+.vercel

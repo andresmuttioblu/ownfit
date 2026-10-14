@@ -87,7 +87,7 @@ export function AddGarment() {
       {step.kind === "pick" && (
         <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed p-10 text-center hover:bg-muted">
           <span className="text-base font-medium">Take or choose a photo</span>
-          <span className="text-sm text-muted-foreground">One item, laid flat or on a hanger, in good light.</span>
+          <span className="text-sm text-muted-foreground">One item, hanging or laid flat, in good light. Keep people and other things out of the frame.</span>
           <input ref={inputRef} type="file" accept="image/*" className="sr-only"
             onChange={(e) => onFile(e.target.files?.[0])} />
         </label>
