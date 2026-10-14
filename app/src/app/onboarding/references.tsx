@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, type Dispatch, type SetStateAction } from "react";
+import { ImagePlus, Loader2, X } from "lucide-react";
+import { Notice } from "@/components/notice";
 import { STYLE_VOCAB, type StyleWeights } from "@/lib/style/profile";
 
 const MAX_SIDE = 1024;
@@ -52,26 +54,31 @@ export function References({ value, onChange, busy, setBusy }: {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-sm text-muted-foreground">
-        Add up to {max} outfit photos you&apos;ve saved (screenshots from Pinterest or Instagram are fine). They&apos;re read for style, then discarded; they aren&apos;t stored.
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-pretty text-muted-foreground">
+        Add up to {max} outfit photos you&apos;ve saved (screenshots from Pinterest or Instagram are fine). They&apos;re read for style, then discarded, never stored.
       </p>
       {value.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           {value.map((r, i) => (
-            <div key={r.previewUrl} className="relative">
+            <div key={r.previewUrl} className="rise-in relative" style={{ "--i": i } as React.CSSProperties}>
               {/* eslint-disable-next-line @next/next/no-img-element -- local object URL */}
-              <img src={r.previewUrl} alt={`Reference ${i + 1}`} className="aspect-[3/4] w-full rounded-md object-cover" />
+              <img src={r.previewUrl} alt={`Reference ${i + 1}`} className="aspect-[3/4] w-full rounded-xl object-cover" />
               <button type="button" onClick={() => remove(i)} disabled={busy} aria-label={`Remove reference ${i + 1}`}
-                className="absolute right-1 top-1 rounded-full bg-background/90 px-2 text-sm">×</button>
+                className="group absolute top-0 right-0 flex size-11 items-start justify-end p-1.5 outline-none disabled:opacity-50">
+                <span className="flex size-6 items-center justify-center rounded-full bg-background/90 text-foreground transition-transform duration-150 group-focus-visible:ring-2 group-focus-visible:ring-ring group-active:scale-90">
+                  <X className="size-3.5" aria-hidden />
+                </span>
+              </button>
             </div>
           ))}
         </div>
       )}
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      {error && <Notice tone="error">{error}</Notice>}
       {value.length < max && (
-        <label className={`inline-flex h-9 items-center justify-center rounded-lg border px-3 text-sm font-medium hover:bg-muted ${busy ? "pointer-events-none opacity-50" : "cursor-pointer"}`}>
-          {busy ? "Reading…" : "Add images"}
+        <label className={`flex h-16 items-center gap-3.5 rounded-2xl border border-dashed px-4 text-muted-foreground transition-[color,transform] duration-150 focus-within:ring-2 focus-within:ring-ring active:scale-[0.99] ${busy ? "pointer-events-none opacity-60" : "cursor-pointer hover:text-foreground"}`}>
+          {busy ? <Loader2 className="size-5 shrink-0 animate-spin motion-reduce:animate-none" aria-hidden /> : <ImagePlus className="size-5 shrink-0" aria-hidden />}
+          <span className="text-base font-medium">{busy ? "Reading…" : value.length ? "Add more photos" : "Add photos"}</span>
           <input type="file" accept="image/*" multiple className="sr-only" disabled={busy}
             onChange={(e) => { add(e.target.files); e.target.value = ""; }} />
         </label>

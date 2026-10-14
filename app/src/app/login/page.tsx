@@ -3,6 +3,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AUTH_COOKIE, AUTH_MAX_AGE_S, isPasswordCorrect, sessionToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Notice } from "@/components/notice";
+import { EmptyHanger } from "@/components/illustrations";
 
 const WRONG_PASSWORD_DELAY_MS = 1000; // slows down guessing
 
@@ -34,32 +37,38 @@ async function LoginForm({ searchParams }: { searchParams: PageProps<"/login">["
   const { error, next } = await searchParams;
   if (!process.env.APP_PASSWORD || !process.env.AUTH_SECRET) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Sign-in isn&apos;t configured. Add <code>APP_PASSWORD</code> and <code>AUTH_SECRET</code> to the Vercel environment variables (the setup skill explains how), then redeploy.
-      </p>
+      <Notice>
+        <p>Sign-in isn&apos;t configured. Add <code>APP_PASSWORD</code> and <code>AUTH_SECRET</code> to the Vercel environment variables (the setup skill explains how), then redeploy.</p>
+      </Notice>
     );
   }
   return (
-    <form action={signIn} className="flex flex-col gap-3">
+    <form action={signIn} className="flex w-full flex-col gap-3">
       <input type="hidden" name="next" value={typeof next === "string" ? next : "/"} />
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1.5 text-sm font-medium">
         Passcode
-        <input name="password" type="password" autoFocus required autoComplete="current-password"
-          className="rounded-md border px-3 py-2 text-base" />
+        <Input name="password" type="password" autoFocus required autoComplete="current-password" aria-invalid={error ? true : undefined}
+          className="h-12 rounded-xl px-4 text-base" />
       </label>
-      {error && <p role="alert" className="text-sm text-red-700">Wrong passcode.</p>}
-      <Button type="submit">Sign in</Button>
+      {error && <Notice tone="error">Wrong passcode. Try again.</Notice>}
+      <Button type="submit" className="h-12 rounded-xl text-base">Sign in</Button>
     </form>
   );
 }
 
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-4 p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Ownfit</h1>
-      <Suspense>
-        <LoginForm searchParams={searchParams} />
-      </Suspense>
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-6 px-4 pt-5 pb-8">
+      <div className="rise-in flex flex-col items-center gap-3 text-center">
+        <EmptyHanger className="h-14 text-muted-foreground" />
+        <h1 className="text-[1.625rem] leading-tight font-semibold tracking-[-0.01em]">Ownfit</h1>
+        <p className="text-sm text-muted-foreground">Your closet, ready when you are.</p>
+      </div>
+      <div className="rise-in" style={{ "--i": 1 } as React.CSSProperties}>
+        <Suspense>
+          <LoginForm searchParams={searchParams} />
+        </Suspense>
+      </div>
     </main>
   );
 }

@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Notice } from "@/components/notice";
+import { GarmentImage } from "@/components/garment-tile";
 import { TagFields } from "./tag-fields";
 import { updateGarments, type GarmentPatch } from "./actions";
 import type { CatalogItem } from "./catalog-review";
@@ -39,20 +42,15 @@ export function GarmentEditor({ items, open, onOpenChange }: { items: CatalogIte
       <SheetContent className="w-full overflow-y-auto data-[side=right]:w-full sm:max-w-md">
         <SheetHeader>
           <SheetTitle>{isBulk ? `Edit ${items.length} items` : items[0].name}</SheetTitle>
-          <SheetDescription>{isBulk ? "Only the fields you change are applied to every selected item." : "Fix anything the tagging got wrong."}</SheetDescription>
+          <SheetDescription>{isBulk ? "Only the fields you change are applied to every selected item." : "Fix anything that looks off."}</SheetDescription>
         </SheetHeader>
-        <div className="flex flex-col gap-5 px-4">
-          {!isBulk && (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed R2 URL */}
-              <img src={items[0].imageUrl} alt={items[0].name} className="mx-auto aspect-square w-48 rounded-md border object-contain" />
-            </>
-          )}
+        <div className="flex flex-col gap-6 px-4 pb-4">
+          {!isBulk && <GarmentImage src={items[0].imageUrl} alt={items[0].name} className="mx-auto w-48" />}
           <TagFields value={value} set={set} single={!isBulk} />
-          {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+          {error && <Notice tone="error">{error}</Notice>}
         </div>
         <SheetFooter>
-          <Button onClick={save} disabled={pending}>{pending ? "Saving…" : "Save & mark reviewed"}</Button>
+          <Button size="lg" onClick={save} disabled={pending}><Check aria-hidden />{pending ? "Saving…" : "Save & mark reviewed"}</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

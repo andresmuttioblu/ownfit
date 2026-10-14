@@ -3,12 +3,12 @@
 import { Input } from "@/components/ui/input";
 import { CATEGORIES, VOCAB, type Category, type GarmentTags } from "@/lib/catalog/vocabulary";
 
-const selectClass = "h-9 w-full rounded-md border bg-background px-2 text-sm disabled:opacity-50";
+const selectClass = "h-11 w-full rounded-xl bg-muted px-3 text-base outline-none transition-colors duration-150 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50";
 
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium text-muted-foreground">{label}</span>
       {children}
     </div>
   );
@@ -17,13 +17,13 @@ export function Field({ label, children }: { label: string; children: React.Reac
 export function Chips({ options, value, onChange, max }: { options: string[]; value: string[] | undefined; onChange: (v: string[]) => void; max?: number }) {
   const current = value ?? [];
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-2">
       {options.map((o) => {
         const on = current.includes(o);
         return (
           <button key={o} type="button" aria-pressed={on}
             onClick={() => onChange(on ? current.filter((c) => c !== o) : max && current.length >= max ? current : [...current, o])}
-            className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${on ? "border-foreground bg-foreground text-background" : "hover:bg-muted"}`}>
+            className={`h-11 rounded-full px-4 text-sm transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring ${on ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-accent"}`}>
             {o}
           </button>
         );
@@ -34,14 +34,14 @@ export function Chips({ options, value, onChange, max }: { options: string[]; va
 
 function Scale({ value, onChange, labels }: { value: number | undefined; onChange: (v: number) => void; labels: Record<string, string> }) {
   return (
-    <div className="flex gap-1.5" role="radiogroup">
+    <div className="flex items-center gap-2" role="radiogroup">
       {[1, 2, 3, 4, 5].map((n) => (
         <button key={n} type="button" role="radio" aria-checked={value === n} title={labels[n]} onClick={() => onChange(n)}
-          className={`size-9 rounded-md border text-sm ${value === n ? "border-foreground bg-foreground text-background" : "hover:bg-muted"}`}>
+          className={`size-11 rounded-xl text-base transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring ${value === n ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-accent"}`}>
           {n}
         </button>
       ))}
-      <span className="self-center pl-1 text-xs text-muted-foreground">{value ? labels[value] : "mixed"}</span>
+      <span className="pl-1 text-sm text-muted-foreground">{value ? labels[value] : "mixed"}</span>
     </div>
   );
 }
@@ -63,7 +63,7 @@ export function TagFields({ value, set, single }: {
               </Field>
             </>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-5">
             <Field label="Category">
               <select className={selectClass} value={category ?? ""} onChange={(e) => set({ category: e.target.value, subcategory: "other" })}>
                 {!category && <option value="">mixed</option>}

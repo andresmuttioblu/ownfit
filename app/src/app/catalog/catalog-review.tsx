@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Check, Merge, Pencil, Trash2, X } from "lucide-react";
+import { GarmentImage } from "@/components/garment-tile";
+import { Notice } from "@/components/notice";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CATEGORIES } from "@/lib/catalog/vocabulary";
@@ -23,6 +26,7 @@ function gridColumns(grid: HTMLElement | null): number {
 export function CatalogReview({ items }: { items: CatalogItem[] }) {
   const [filter, setFilter] = useState<string>("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selecting, setSelecting] = useState(false); // phone: checkboxes only in select mode (always shown on desktop)
   const [focus, setFocus] = useState(0);
   const [editing, setEditing] = useState<CatalogItem[]>([]);
   const [confirm, setConfirm] = useState<Confirm>(null);
@@ -101,56 +105,55 @@ export function CatalogReview({ items }: { items: CatalogItem[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3">
         <select aria-label="Filter" value={effectiveFilter} onChange={(e) => setFilter(e.target.value)}
-          className="h-9 rounded-md border bg-background px-2 text-sm">
+          className="h-11 rounded-xl bg-muted px-3 text-base capitalize outline-none transition-colors duration-150 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring">
           <option value="all">All ({items.length})</option>
           <option value="review">Needs review ({reviewCount})</option>
           {CATEGORIES.filter((c) => items.some((i) => i.category === c)).map((c) => (
             <option key={c} value={c}>{c} ({items.filter((i) => i.category === c).length})</option>
           ))}
         </select>
+        <Button variant="ghost" className="ml-auto text-muted-foreground hover:text-foreground lg:hidden" 
+          onClick={() => { if (selecting) setSelected(new Set()); setSelecting(!selecting); }}>{selecting ? "Done" : "Select"}</Button>
         <p className="hidden text-xs text-muted-foreground lg:block">
           Arrows move · <kbd>x</kbd> select · <kbd>e</kbd> edit · <kbd>m</kbd> merge · <kbd>r</kbd> reviewed · <kbd>Del</kbd> delete · <kbd>Esc</kbd> clear
         </p>
       </div>
 
       {selectedItems.length > 0 && (
-        <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-lg border bg-background/95 p-2 shadow-sm backdrop-blur">
-          <span className="px-1 text-sm font-medium">{selectedItems.length} selected</span>
-          <Button size="sm" onClick={() => setEditing(selectedItems)}>Edit</Button>
-          <Button size="sm" variant="outline" onClick={markReviewed} disabled={pending}>Mark reviewed</Button>
-          <Button size="sm" variant="outline" onClick={() => setConfirm({ kind: "merge" })} disabled={selectedItems.length < 2}>Merge duplicates</Button>
-          <Button size="sm" variant="destructive" onClick={() => setConfirm({ kind: "delete" })}>Delete</Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>
+        <div className="rise-in sticky top-2 z-10 flex items-center gap-1 rounded-2xl bg-primary p-1.5 pl-4 text-primary-foreground shadow-lg">
+          <span className="flex-1 text-sm font-medium">{selectedItems.length} selected</span>
+          <BarButton label="Edit" onClick={() => setEditing(selectedItems)}><Pencil aria-hidden /></BarButton>
+          <BarButton label="Mark reviewed" onClick={markReviewed} disabled={pending}><Check aria-hidden /></BarButton>
+          <BarButton label="Merge duplicates" onClick={() => setConfirm({ kind: "merge" })} disabled={selectedItems.length < 2}><Merge aria-hidden /></BarButton>
+          <BarButton label="Delete" onClick={() => setConfirm({ kind: "delete" })}><Trash2 aria-hidden /></BarButton>
+          <BarButton label="Clear selection" onClick={() => setSelected(new Set())}><X aria-hidden /></BarButton>
         </div>
       )}
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      {error && <Notice tone="error">{error}</Notice>}
 
       {visible.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          {effectiveFilter === "review" ? "Nothing left to review." : "No items here."}
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          {effectiveFilter === "review" ? "All caught up. Nothing left to review." : "Nothing here."}
         </p>
       )}
-      <div ref={gridRef} className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+      <div ref={gridRef} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {visible.map((item, index) => {
           const isSelected = selected.has(item.id);
           return (
-            <div key={item.id} data-index={index} tabIndex={index === focusIndex ? 0 : -1} onFocus={() => setFocus(index)}
-              className={`group relative flex flex-col overflow-hidden rounded-lg border bg-white outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-foreground ${isSelected ? "ring-2 ring-blue-600" : ""}`}>
-              <button type="button" onClick={() => setEditing([item])} className="flex flex-col text-left" aria-label={`Edit ${item.name}`}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed R2 URL */}
-                <img src={item.imageUrl} alt="" loading="lazy" onError={onImageError} className="aspect-square w-full object-contain" />
-                <span className="flex flex-col gap-0.5 border-t px-2 py-1.5 text-gray-900">
-                  <span className="truncate text-sm font-medium">{item.name}</span>
-                  <span className="truncate text-xs text-gray-500">{item.subcategory} · {item.colors.join(", ")}</span>
-                </span>
+            <div key={item.id} data-index={index} tabIndex={index === focusIndex ? 0 : -1} onFocus={() => setFocus(index)} style={{ "--i": Math.min(index, 8) } as React.CSSProperties}
+              className={`rise-in group relative flex flex-col gap-1.5 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${isSelected ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : ""}`}>
+              <button type="button" onClick={() => setEditing([item])} className="flex flex-col gap-1.5 rounded-2xl text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-transform duration-150 ease-(--ease-out-quart) active:scale-[0.99]" aria-label={`Edit ${item.name}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed R2 URL; GarmentImage has no onError */}
+                <img src={item.imageUrl} alt="" loading="lazy" onError={onImageError} className="aspect-square w-full rounded-2xl bg-tile object-contain ring-1 ring-border ring-inset dark:ring-0" />
+                <span className="truncate px-1 text-sm text-muted-foreground">{item.name}</span>
               </button>
-              <label className="absolute left-1.5 top-1.5 flex size-8 cursor-pointer items-center justify-center rounded-md bg-white/90">
-                <input type="checkbox" checked={isSelected} onChange={() => toggle(item.id)} aria-label={`Select ${item.name}`} className="size-4" />
+              <label className={`absolute top-0 left-0 size-11 cursor-pointer items-center justify-center ${selecting || selected.size ? "flex" : "hidden lg:flex"}`}>
+                <input type="checkbox" checked={isSelected} onChange={() => toggle(item.id)} aria-label={`Select ${item.name}`} className="size-5 rounded bg-background accent-black shadow-[0_0_0_3px_white]" />
               </label>
               {item.needsReview && (
-                <span className="absolute right-1.5 top-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-900">review</span>
+                <span className="absolute top-2 right-2 size-2.5 rounded-full bg-black ring-2 ring-white" role="img" aria-label="Needs review" />
               )}
             </div>
           );
@@ -166,8 +169,8 @@ export function CatalogReview({ items }: { items: CatalogItem[] }) {
             <DialogDescription>Use this for bad detections (a person, a blurry frame). The images are removed too. This can&apos;t be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirm(null)}>Cancel</Button>
-            <Button variant="destructive" disabled={pending}
+            <Button variant="ghost" size="lg" onClick={() => setConfirm(null)}>Cancel</Button>
+            <Button variant="destructive" size="lg" disabled={pending}
               onClick={() => act(() => deleteGarments(ids), () => { setConfirm(null); setSelected(new Set()); })}>Delete</Button>
           </DialogFooter>
         </DialogContent>
@@ -183,14 +186,22 @@ export function CatalogReview({ items }: { items: CatalogItem[] }) {
             {selectedItems.map((item) => (
               <button key={item.id} type="button" disabled={pending}
                 onClick={() => act(() => mergeGarments(item.id, ids), () => { setConfirm(null); setSelected(new Set()); })}
-                className="overflow-hidden rounded-md border bg-white hover:ring-2 hover:ring-foreground">
-                {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed R2 URL */}
-                <img src={item.imageUrl} alt={item.name} className="aspect-square w-full object-contain" />
+                className="rounded-xl outline-none transition-shadow duration-150 hover:ring-2 hover:ring-foreground focus-visible:ring-2 focus-visible:ring-ring">
+                <GarmentImage src={item.imageUrl} alt={item.name} />
               </button>
             ))}
           </div>
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function BarButton({ label, children, ...props }: { label: string; children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
+  return (
+    <Button type="button" variant="ghost" size="icon-lg" aria-label={label} title={label}
+      className="rounded-xl text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground dark:hover:bg-primary-foreground/15" {...props}>
+      {children}
+    </Button>
   );
 }
