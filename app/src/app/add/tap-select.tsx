@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Minus, Plus, Undo2 } from "lucide-react";
+import { SwingingHanger } from "@/components/illustrations";
 import { Button } from "@/components/ui/button";
 import type { Cutout } from "@/lib/catalog/cutout";
 import type { Tap } from "@/lib/catalog/sam";
@@ -80,29 +82,33 @@ export function TapSelect({ photo, photoUrl, onDone, onCancel }: {
     }
   }
 
+  const seg = (on: boolean) => `flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring ${on ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`;
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-sm text-muted-foreground" aria-live="polite">
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-pretty text-muted-foreground" aria-live="polite">
         {error ?? (segment ? "Tap the item. Switch to “Not the item” to tap anything that got picked up by mistake." : "Getting ready…")}
       </p>
-      <div className="relative mx-auto w-full max-w-sm cursor-crosshair touch-manipulation select-none overflow-hidden rounded-lg border" onClick={onTap}>
+      {!segment && !error && <SwingingHanger className="mx-auto h-10 text-muted-foreground" />}
+      <div className="relative mx-auto w-full max-w-sm cursor-crosshair touch-manipulation overflow-hidden rounded-2xl bg-muted select-none" onClick={onTap}>
         {/* eslint-disable-next-line @next/next/no-img-element -- local object URL */}
         <img src={photoUrl} alt="Your photo" className="block w-full" draggable={false} />
         <canvas ref={overlay} className="pointer-events-none absolute inset-0 h-full w-full" />
         {taps.map((t, i) => (
           <span key={i} aria-hidden
-            className={`pointer-events-none absolute size-3.5 -translate-1/2 rounded-full border-2 border-white ${t.include ? "bg-blue-600" : "bg-red-600"}`}
+            className={`pointer-events-none absolute size-4 -translate-1/2 rounded-full ring-2 ${t.include ? "bg-white ring-black" : "bg-black ring-white"}`}
             style={{ left: `${(t.x / photo.width) * 100}%`, top: `${(t.y / photo.height) * 100}%` }} />
         ))}
       </div>
-      <div className="flex flex-wrap gap-2">
-        <Button variant={include ? "default" : "outline"} size="sm" onClick={() => setInclude(true)} aria-pressed={include}>The item</Button>
-        <Button variant={include ? "outline" : "default"} size="sm" onClick={() => setInclude(false)} aria-pressed={!include}>Not the item</Button>
-        <Button variant="ghost" size="sm" onClick={() => run(taps.slice(0, -1))} disabled={!taps.length}>Undo</Button>
+      <div className="flex items-center gap-2">
+        <div className="flex flex-1 gap-1 rounded-xl bg-muted p-1" role="group" aria-label="What to tap">
+          <button type="button" className={seg(include)} aria-pressed={include} onClick={() => setInclude(true)}><Plus className="size-4" aria-hidden />The item</button>
+          <button type="button" className={seg(!include)} aria-pressed={!include} onClick={() => setInclude(false)}><Minus className="size-4" aria-hidden />Not the item</button>
+        </div>
+        <Button variant="ghost" size="icon-lg" className="text-muted-foreground" aria-label="Undo last tap" onClick={() => run(taps.slice(0, -1))} disabled={!taps.length}><Undo2 aria-hidden /></Button>
       </div>
-      <div className="flex gap-2">
-        <Button className="flex-1" onClick={done} disabled={!mask || busy}>{busy ? "Cutting out…" : "Use this"}</Button>
-        <Button variant="outline" onClick={onCancel} disabled={busy}>Back</Button>
+      <div className="flex flex-col gap-2">
+        <Button size="lg" className="h-14 rounded-2xl text-base" onClick={done} disabled={!mask || busy}>{busy ? "Cutting out…" : "Use this"}</Button>
+        <Button variant="ghost" size="lg" className="text-muted-foreground" onClick={onCancel} disabled={busy}>Back</Button>
       </div>
     </div>
   );

@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
+import { Archive, CalendarX, Check, CircleCheck, PackageX, Shuffle, ThumbsDown, ThumbsUp } from "lucide-react";
+import { FlatLay } from "@/components/flat-lay";
+import { GarmentImage } from "@/components/garment-tile";
+import { Notice } from "@/components/notice";
 import { Button } from "@/components/ui/button";
 import type { Weather } from "@/lib/outfits/filter";
 import { notToday, recordOutfit, retireGarment, swapPiece, type ActionResult, type Outfit, type OutfitPiece } from "./actions";
@@ -11,10 +15,10 @@ export const localToday = () => new Date().toLocaleDateString("en-CA");
 const OFFLINE = "Couldn't reach Ownfit. Check your connection and try again.";
 const call = <T,>(p: Promise<T>, fallback: T) => p.catch((e) => { console.error(e); return fallback; });
 
-type Props = { outfit: Outfit; activity: string; weather: Weather };
+type Props = { outfit: Outfit; activity: string; weather: Weather; index?: number };
 
 /** One suggested outfit: tap a piece to set it aside, swap or retire it; rate or log the outfit as a whole. */
-export function OutfitCard({ outfit, activity, weather }: Props) {
+export function OutfitCard({ outfit, activity, weather, index = 0 }: Props) {
   const [pieces, setPieces] = useState(outfit.pieces);
   const [selected, setSelected] = useState<string | null>(null);
   const [retiring, setRetiring] = useState(false);
@@ -71,44 +75,57 @@ export function OutfitCard({ outfit, activity, weather }: Props) {
     else setRated(kind);
   });
 
+  const ghost = "text-muted-foreground hover:text-foreground";
   return (
-    <article className="flex flex-col gap-2 rounded-xl border p-3">
-      <div className="grid grid-cols-3 gap-2">
-        {pieces.map((p) => (
-          <button key={p.id} type="button" aria-pressed={selected === p.id} disabled={busy}
-            className={`flex flex-col gap-1 rounded-md text-left ${selected === p.id ? "ring-2 ring-foreground ring-offset-2" : ""}`}
+    <article className="rise-in flex flex-col gap-3" style={{ "--i": index } as CSSProperties}>
+      <div className="rounded-3xl bg-muted p-2">
+        <FlatLay pieces={pieces} tile={(p) => (
+          <button type="button" aria-pressed={selected === p.id} aria-label={p.name} disabled={busy}
+            className={`block w-full rounded-2xl outline-none transition-[opacity,box-shadow,transform] duration-200 ease-(--ease-out-quart) focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98] ${selected === p.id ? "ring-2 ring-primary ring-offset-2 ring-offset-muted" : selected ? "opacity-50" : ""}`}
             onClick={() => select(selected === p.id ? null : p.id)}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed R2 URL */}
-            <img src={p.imageUrl} alt="" className="aspect-square w-full rounded-md border bg-white object-contain" />
-            <span className="truncate text-xs text-muted-foreground">{p.name}</span>
+            <GarmentImage src={p.imageUrl} className="rounded-2xl" />
           </button>
-        ))}
+        )} />
       </div>
 
-      {piece && !retiring && (
-        <div className="flex flex-wrap gap-2" aria-label={`Actions for ${piece.name}`}>
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => setAside(piece, notToday(piece.id, localToday()))}>Not today</Button>
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => run(() => replace(piece, false))}>Swap</Button>
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => setRetiring(true)}>Retire</Button>
-        </div>
-      )}
-      {piece && retiring && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm">Retire {piece.name}?</span>
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => setAside(piece, retireGarment(piece.id, "dislike"))}>I don&apos;t like it</Button>
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => setAside(piece, retireGarment(piece.id, "no_longer_owned"))}>I don&apos;t have it</Button>
-          <Button size="sm" variant="ghost" disabled={busy} onClick={() => setRetiring(false)}>Cancel</Button>
+      {piece && (
+        <div key={piece.id + retiring} className="rise-in flex flex-col gap-1.5 px-1">
+          <p className="text-sm font-medium">{retiring ? `Retire ${piece.name}?` : piece.name}</p>
+          <div className="-ml-2.5 flex flex-wrap gap-1">
+            {retiring ? (
+              <>
+                <Button size="sm" variant="ghost" className={ghost} disabled={busy} onClick={() => setAside(piece, retireGarment(piece.id, "dislike"))}><ThumbsDown aria-hidden />Don&apos;t like it</Button>
+                <Button size="sm" variant="ghost" className={ghost} disabled={busy} onClick={() => setAside(piece, retireGarment(piece.id, "no_longer_owned"))}><PackageX aria-hidden />Don&apos;t have it</Button>
+                <Button size="sm" variant="ghost" className={ghost} disabled={busy} onClick={() => setRetiring(false)}>Cancel</Button>
+              </>
+            ) : (
+              <>
+                <Button size="sm" variant="ghost" className={ghost} disabled={busy} onClick={() => setAside(piece, notToday(piece.id, localToday()))}><CalendarX aria-hidden />Not today</Button>
+                <Button size="sm" variant="ghost" className={ghost} disabled={busy} onClick={() => run(() => replace(piece, false))}><Shuffle aria-hidden />Swap</Button>
+                <Button size="sm" variant="ghost" className={ghost} disabled={busy} onClick={() => setRetiring(true)}><Archive aria-hidden />Retire</Button>
+              </>
+            )}
+          </div>
         </div>
       )}
 
-      <p className="text-sm">{outfit.why}</p>
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant={wore ? "default" : "outline"} disabled={busy || wore || incomplete} onClick={() => log("wore")}>{wore ? "Worn today" : "Wore this"}</Button>
-        <Button size="sm" variant={rated === "like" ? "default" : "outline"} disabled={busy || !!rated || incomplete} aria-label="I like this outfit" onClick={() => log("like")}>👍</Button>
-        <Button size="sm" variant={rated === "dislike" ? "default" : "outline"} disabled={busy || !!rated || incomplete} aria-label="I don't like this outfit" onClick={() => log("dislike")}>👎</Button>
+      <div className="flex items-start gap-2 px-1">
+        <p className="flex-1 pt-2 text-[0.9375rem] leading-snug text-pretty">{outfit.why}</p>
+        <div className="flex shrink-0">
+          <Button size="icon" variant="ghost" className={wore ? "text-success" : ghost} disabled={busy || wore || incomplete} aria-label={wore ? "Worn today" : "I wore this"} aria-pressed={wore} onClick={() => log("wore")}>
+            {wore ? <CircleCheck aria-hidden /> : <Check aria-hidden />}
+          </Button>
+          <Button size="icon" variant="ghost" className={rated === "like" ? "text-primary" : ghost} disabled={busy || !!rated || incomplete} aria-label="I like this outfit" aria-pressed={rated === "like"} onClick={() => log("like")}>
+            <ThumbsUp className={rated === "like" ? "fill-current" : ""} aria-hidden />
+          </Button>
+          <Button size="icon" variant="ghost" className={rated === "dislike" ? "text-primary" : ghost} disabled={busy || !!rated || incomplete} aria-label="I don't like this outfit" aria-pressed={rated === "dislike"} onClick={() => log("dislike")}>
+            <ThumbsDown className={rated === "dislike" ? "fill-current" : ""} aria-hidden />
+          </Button>
+        </div>
       </div>
-      {busy && <p className="text-xs text-muted-foreground" aria-live="polite">Working…</p>}
-      {error && <p role="alert" className="text-xs text-red-700">{error}</p>}
+      {wore && <p className="-mt-2 px-1 text-xs text-success" aria-live="polite">Saved as worn today.</p>}
+      {busy && <p className="px-1 text-xs text-muted-foreground" aria-live="polite">Working…</p>}
+      {error && <Notice tone="error" className="mx-1">{error}</Notice>}
     </article>
   );
 }

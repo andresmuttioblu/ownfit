@@ -1,6 +1,9 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+import { Skeleton } from "@/components/garment-tile";
+import { Notice } from "@/components/notice";
 import { requireAuth } from "@/lib/auth";
 import { DEFAULT_WEATHER } from "@/lib/outfits/filter";
 import STYLE_VOCAB from "@/lib/style/style-vocab.json";
@@ -20,38 +23,41 @@ async function Home() {
   await connection();
   await requireAuth();
   const user = await loadUser();
-  if (!user) return <p className="text-red-700">Database not reachable — check DATABASE_URL.</p>;
+  if (!user) return <Notice tone="error">Can&apos;t reach the database. Check DATABASE_URL in your Vercel settings.</Notice>;
   return (
     <>
+      <Today activities={user.activities.length ? user.activities : STYLE_VOCAB.activities} initialWeather={user.weather ?? DEFAULT_WEATHER}>
       {!user.onboardedAt && (
-        <Link href="/onboarding" className="rounded-lg border p-4 hover:bg-muted">
-          <span className="font-medium">Set up your style</span>
-          <span className="block text-sm text-muted-foreground">Five quick rounds so outfit suggestions fit your taste.</span>
+        <Link href="/onboarding" className="group flex items-center gap-3 rounded-2xl bg-muted p-4 outline-none transition-colors duration-150 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring">
+          <span className="flex flex-1 flex-col gap-0.5">
+            <span className="font-medium">Set up your style</span>
+            <span className="text-sm text-muted-foreground">Five quick rounds so suggestions fit your taste.</span>
+          </span>
+          <ChevronRight className="size-5 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden />
         </Link>
       )}
-      <Today activities={user.activities.length ? user.activities : STYLE_VOCAB.activities} initialWeather={user.weather ?? DEFAULT_WEATHER} />
-      <div className="flex justify-center gap-4 text-sm text-muted-foreground">
-        <Link href="/fitting-room" className="hover:underline">Thinking of buying something?</Link>
-        <Link href="/add" className="hover:underline">Bought something new?</Link>
-      </div>
+      </Today>
     </>
   );
 }
 
 export default function HomePage() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 p-4 sm:p-6">
-      <header className="flex items-baseline justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Ownfit</h1>
-        <nav className="flex gap-3 text-sm text-muted-foreground">
-          <Link href="/catalog" className="hover:underline">Catalog</Link>
-          <Link href="/add" className="hover:underline">Add</Link>
-          <Link href="/onboarding" className="hover:underline">Style</Link>
-        </nav>
-      </header>
-      <Suspense fallback={<p className="text-muted-foreground">Loading…</p>}>
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 pt-5 pb-8">
+      <Suspense fallback={<HomeLoading />}>
         <Home />
       </Suspense>
     </main>
+  );
+}
+
+function HomeLoading() {
+  return (
+    <div className="flex flex-col gap-7" aria-busy>
+      <span className="sr-only" role="status">Loading…</span>
+      <Skeleton className="h-9 w-24 self-end rounded-full" />
+      <Skeleton className="h-8 w-3/4" />
+      <div className="flex flex-col gap-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-16 rounded-2xl" />)}</div>
+    </div>
   );
 }

@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
+import { Copy, Layers, ShoppingBag, Sparkles, Unlink } from "lucide-react";
+import { QuestionTag, SwingingHanger } from "@/components/illustrations";
+import { FlatLay } from "@/components/flat-lay";
+import { GarmentImage } from "@/components/garment-tile";
+import { Notice } from "@/components/notice";
 import { Button } from "@/components/ui/button";
 import { AddGarment } from "@/app/add/add-garment";
 import type { Outfit } from "@/app/_today/actions";
@@ -8,6 +13,7 @@ import { localToday } from "@/app/_today/outfit-card";
 import type { GarmentTags } from "@/lib/catalog/vocabulary";
 import type { Weather } from "@/lib/outfits/filter";
 import type { Assessment } from "@/lib/outfits/fitting";
+import { PhotoDrop, UnlockRows, Wait } from "@/app/add/ui";
 import { exampleOutfits, type ExampleResult } from "./actions";
 
 const MAX_SIDE = 1600;
@@ -40,6 +46,11 @@ function headline({ verdict, sameKind, unlocks, tags }: Checked): string {
   return unlocks.length ? "Adds variety to outfits you can already make." : "You don't own what it goes with yet.";
 }
 
+function VerdictIcon({ verdict, unlocks }: Checked) {
+  const Icon = verdict === "duplicate" ? Copy : verdict === "gap" ? Sparkles : unlocks.length ? Layers : Unlink;
+  return <Icon className="size-5" aria-hidden />;
+}
+
 /** "Should I buy this?": a shop photo checked against the closet. Nothing is stored unless the user taps "I bought it". */
 export function FittingRoom({ weather }: { weather: Weather }) {
   const [step, setStep] = useState<Step>({ kind: "pick" });
@@ -65,16 +76,13 @@ export function FittingRoom({ weather }: { weather: Weather }) {
   if (step.kind === "bought") return <AddGarment weather={weather} initialFile={step.photo} />;
 
   return (
-    <div className="flex flex-col gap-5">
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+    <div className="flex flex-col gap-6">
+      {error && <Notice tone="error">{error}</Notice>}
       {step.kind === "pick" && (
-        <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed p-10 text-center hover:bg-muted">
-          <span className="text-base font-medium">Choose a photo of the item</span>
-          <span className="text-sm text-muted-foreground">A shop photo or a screenshot works. It isn&apos;t saved and doesn&apos;t go into your catalog.</span>
-          <input ref={inputRef} type="file" accept="image/*" className="sr-only" onChange={(e) => onFile(e.target.files?.[0])} />
-        </label>
+        <PhotoDrop illustration={<QuestionTag className="h-24" />} title="Choose a photo of the item" inputRef={inputRef} onFile={onFile}
+          hint="A shop photo or a screenshot works. It isn't saved and doesn't go into your catalog." />
       )}
-      {step.kind === "working" && <p className="py-10 text-center text-muted-foreground" aria-live="polite">Checking it against your closet…</p>}
+      {step.kind === "working" && <Wait>Checking it against your closet…</Wait>}
       {step.kind === "result" && (
         <Verdict step={step} weather={weather} onBought={() => setStep({ kind: "bought", photo: step.photo })} onAgain={() => setStep({ kind: "pick" })} />
       )}
@@ -115,57 +123,51 @@ function Verdict({ step: { photo, checked }, weather, onBought, onAgain }: Verdi
   }
 
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex items-start gap-3">
-        {/* eslint-disable-next-line @next/next/no-img-element -- local object URL */}
-        <img src={photoUrl} alt="" className="aspect-square w-28 shrink-0 rounded-lg border bg-white object-contain" />
-        <div className="flex flex-col gap-1">
-          <p className="font-medium">{checked.tags.name}</p>
-          <p className="text-sm">{headline(checked)}</p>
-          {checked.similar > 0 && checked.verdict !== "duplicate" && (
-            <p className="text-xs text-muted-foreground">You have {checked.similar} {checked.tags.subcategory.replace(/-/g, " ")} in other colors.</p>
-          )}
+    <section className="flex flex-col gap-6">
+      <div className="rise-in flex flex-col gap-4">
+        <div className="mx-auto w-48 rounded-3xl bg-muted p-2">
+          <GarmentImage src={photoUrl} alt={checked.tags.name} className="rounded-2xl" />
+        </div>
+        <div className="flex items-start gap-3.5">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><VerdictIcon {...checked} /></span>
+          <div className="flex min-w-0 flex-col gap-1">
+            <h2 className="text-lg leading-snug font-semibold text-balance">{headline(checked)}</h2>
+            <p className="text-sm text-muted-foreground">{checked.tags.name}</p>
+            {checked.similar > 0 && checked.verdict !== "duplicate" && (
+              <p className="text-sm text-muted-foreground">You have {checked.similar} {checked.tags.subcategory.replace(/-/g, " ")} in other colors.</p>
+            )}
+          </div>
         </div>
       </div>
       {!checked.unlocks.length && checked.verdict === "duplicate" && <p className="text-sm text-muted-foreground">It wouldn&apos;t complete any outfit with what you own yet.</p>}
-      {checked.notGarment && <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">This doesn&apos;t look like clothing. Check the photo.</p>}
+      {checked.notGarment && <Notice tone="warning">This doesn&apos;t look like clothing. Check the photo.</Notice>}
 
-      {checked.unlocks.length > 0 && (
-        <ul className="flex flex-col gap-2">
-          {checked.unlocks.map((u) => (
-            <li key={u.activity} className="flex items-center justify-between gap-3 rounded-lg border p-3">
-              <span className="text-sm"><span className="font-medium capitalize">{u.activity}</span>: {u.outfits} {u.outfits === 1 ? "outfit" : "outfits"}</span>
-              <Button size="sm" variant={activity === u.activity ? "default" : "outline"} disabled={pending} onClick={() => show(u.activity)}>See examples</Button>
-            </li>
-          ))}
-        </ul>
+      {checked.unlocks.length > 0 && <UnlockRows unlocks={checked.unlocks} active={activity} disabled={pending} onPick={show} />}
+      {pending && (
+        <div className="flex flex-col items-center gap-3 py-6 text-muted-foreground" aria-live="polite">
+          <SwingingHanger className="h-14" />
+          <p className="text-sm">Putting outfits together…</p>
+        </div>
       )}
-      {pending && <p className="text-muted-foreground" aria-live="polite">Putting outfits together…</p>}
-      {examples && !examples.ok && <p role="alert" className="text-sm text-red-700">{examples.error}</p>}
-      {examples?.ok && examples.outfits.map((o, i) => <Example key={i} outfit={o} photoUrl={photoUrl} />)}
+      {examples && !examples.ok && <Notice tone="error">{examples.error}</Notice>}
+      {examples?.ok && examples.outfits.map((o, i) => <Example key={i} index={i} outfit={o} photoUrl={photoUrl} />)}
 
-      <div className="flex gap-2">
-        <Button className="flex-1" onClick={onBought}>I bought it</Button>
-        <Button variant="outline" className="flex-1" onClick={onAgain}>Check another</Button>
+      <div className="flex flex-col gap-2">
+        <Button size="lg" className="h-14 rounded-2xl text-base" onClick={onBought}><ShoppingBag aria-hidden />I bought it</Button>
+        <Button variant="ghost" size="lg" className="text-muted-foreground" onClick={onAgain}>Check another</Button>
       </div>
     </section>
   );
 }
 
-/** A read-only outfit: feedback and swaps are for things you own. */
-function Example({ outfit, photoUrl }: { outfit: Outfit; photoUrl: string }) {
+/** A read-only outfit: feedback and swaps are for things you own. The new piece shows the shop photo. */
+function Example({ outfit, photoUrl, index }: { outfit: Outfit; photoUrl: string; index: number }) {
   return (
-    <article className="flex flex-col gap-2 rounded-xl border p-3">
-      <div className="grid grid-cols-3 gap-2">
-        {outfit.pieces.map((p) => (
-          <figure key={p.id} className="flex flex-col gap-1">
-            {/* eslint-disable-next-line @next/next/no-img-element -- signed R2 URL or local object URL */}
-            <img src={p.imageUrl || photoUrl} alt="" className="aspect-square w-full rounded-md border bg-white object-contain" />
-            <figcaption className="truncate text-xs text-muted-foreground">{p.imageUrl ? p.name : `${p.name} (new)`}</figcaption>
-          </figure>
-        ))}
+    <article className="rise-in flex flex-col gap-3" style={{ "--i": index } as CSSProperties}>
+      <div className="rounded-3xl bg-muted p-2">
+        <FlatLay pieces={outfit.pieces} tile={(p) => <GarmentImage src={p.imageUrl || photoUrl} alt={p.imageUrl ? p.name : `${p.name} (new)`} className="rounded-2xl" />} />
       </div>
-      <p className="text-sm">{outfit.why}</p>
+      <p className="px-1 text-[0.9375rem] leading-snug text-pretty">{outfit.why}</p>
     </article>
   );
 }

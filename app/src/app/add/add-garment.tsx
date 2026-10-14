@@ -2,6 +2,10 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { Check, ChevronRight, CircleCheck, ImagePlus, MousePointerClick, Plus } from "lucide-react";
+import { CameraShirt } from "@/components/illustrations";
+import { GarmentImage } from "@/components/garment-tile";
+import { Notice } from "@/components/notice";
 import { Button } from "@/components/ui/button";
 import { TagFields } from "@/app/catalog/tag-fields";
 import type { Cutout } from "@/lib/catalog/cutout";
@@ -9,6 +13,7 @@ import type { GarmentTags } from "@/lib/catalog/vocabulary";
 import { confirmDraft, discardDraft } from "./actions";
 import { TapSelect } from "./tap-select";
 import { Unlocks } from "./unlocks";
+import { PhotoDrop, ROW, rowTone, Wait } from "./ui";
 import type { Unlock, Weather } from "@/lib/outfits/filter";
 
 const EMPTY_TAGS: GarmentTags = {
@@ -143,32 +148,33 @@ export function AddGarment({ weather, initialFile }: { weather: Weather; initial
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      {error && step.kind !== "confirm" && step.kind !== "check" && <p role="alert" className="text-sm text-red-700">{error}</p>}
+    <div className="flex flex-col gap-6">
+      {error && step.kind !== "confirm" && step.kind !== "check" && <Notice tone="error">{error}</Notice>}
 
       {step.kind === "pick" && (
-        <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed p-10 text-center hover:bg-muted">
-          <span className="text-base font-medium">Take or choose a photo</span>
-          <span className="text-sm text-muted-foreground">One item, hanging or laid flat, in good light. Keep people and other things out of the frame.</span>
-          <input ref={inputRef} type="file" accept="image/*" className="sr-only"
-            onChange={(e) => onFile(e.target.files?.[0])} />
-        </label>
+        <PhotoDrop illustration={<CameraShirt className="h-24" />} title="Take or choose a photo" inputRef={inputRef} onFile={onFile}
+          hint="One item, hanging or laid flat, in good light. Keep people and other things out of the frame." />
       )}
 
-      {step.kind === "working" && <p className="py-10 text-center text-muted-foreground" aria-live="polite">{step.message}</p>}
+      {step.kind === "working" && <Wait>{step.message}</Wait>}
 
       {step.kind === "check" && (
         <>
-          {/* eslint-disable-next-line @next/next/no-img-element -- local object URL */}
-          <img src={step.shot.cutoutUrl} alt="Cutout of your item" className="mx-auto aspect-square w-56 rounded-lg border bg-white object-contain" />
-          <p className="text-center text-sm text-muted-foreground">Is that just the item?</p>
-          {step.shot.cutout.isBlank && <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">The cutout looks almost empty. Tap the item to select it.</p>}
-          {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-          <div className="flex flex-wrap gap-2">
-            <Button className="flex-1" onClick={() => upload(step.shot)}>Looks good</Button>
-            <Button variant="outline" className="flex-1" onClick={() => { setError(null); setStep({ kind: "tap", shot: step.shot }); }}>Tap the item instead</Button>
+          <div className="rise-in flex flex-col items-center gap-3 rounded-3xl bg-muted p-2">
+            <GarmentImage src={step.shot.cutoutUrl} alt="Cutout of your item" className="rounded-2xl" />
           </div>
-          <Button variant="ghost" onClick={() => retake(step.shot)}>Choose another photo</Button>
+          <h2 className="-mb-2 text-center text-lg font-semibold">Is that just the item?</h2>
+          {step.shot.cutout.isBlank && <Notice tone="warning">The cutout looks almost empty. Tap the item to select it.</Notice>}
+          {error && <Notice tone="error">{error}</Notice>}
+          <div className="flex flex-col gap-2">
+            <Button size="lg" className="h-14 rounded-2xl text-base" onClick={() => upload(step.shot)}><Check aria-hidden />Looks good</Button>
+            <button type="button" className={`${ROW} ${rowTone(false)}`} onClick={() => { setError(null); setStep({ kind: "tap", shot: step.shot }); }}>
+              <MousePointerClick className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+              <span className="flex-1 text-base font-medium">Tap the item instead</span>
+              <ChevronRight className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden />
+            </button>
+            <Button variant="ghost" size="lg" className="text-muted-foreground" onClick={() => retake(step.shot)}><ImagePlus aria-hidden />Choose another photo</Button>
+          </div>
         </>
       )}
 
@@ -180,25 +186,27 @@ export function AddGarment({ weather, initialFile }: { weather: Weather; initial
 
       {step.kind === "confirm" && (
         <>
-          {/* eslint-disable-next-line @next/next/no-img-element -- short-lived signed R2 URL */}
-          <img src={step.draft.imageUrl} alt="Cutout of your item" className="mx-auto aspect-square w-56 rounded-lg border bg-white object-contain" />
-          {step.draft.warnings.map((w) => <p key={w} className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">{w}</p>)}
+          <div className="rise-in rounded-3xl bg-muted p-2">
+            <GarmentImage src={step.draft.imageUrl} alt="Cutout of your item" className="rounded-2xl" />
+          </div>
+          {step.draft.warnings.map((w) => <Notice key={w} tone="warning">{w}</Notice>)}
           <TagFields value={(k) => tags[k]} set={(p) => setTags((t) => ({ ...t, ...p }))} single />
-          {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-          <div className="flex gap-2">
-            <Button className="flex-1" onClick={() => confirm(step.draft)} disabled={pending}>{pending ? "Adding…" : "Add to catalog"}</Button>
-            <Button variant="outline" onClick={() => cancel(step.draft)} disabled={pending}>Discard</Button>
+          {error && <Notice tone="error">{error}</Notice>}
+          <div className="flex flex-col gap-2">
+            <Button size="lg" className="h-14 rounded-2xl text-base" onClick={() => confirm(step.draft)} disabled={pending}>{pending ? "Adding…" : "Add to catalog"}</Button>
+            <Button variant="ghost" size="lg" className="text-muted-foreground" onClick={() => cancel(step.draft)} disabled={pending}>Discard</Button>
           </div>
         </>
       )}
 
       {step.kind === "saved" && (
-        <div className="flex flex-col items-center gap-3 py-8 text-center">
-          <p className="text-lg font-medium">Added {step.name || "your item"}.</p>
+        <div className="rise-in flex flex-col items-center gap-5 py-4 text-center">
+          <CircleCheck className="size-10" strokeWidth={1.5} aria-hidden />
+          <p className="text-lg font-semibold text-balance">Added {step.name || "your item"}.</p>
           <Unlocks garmentId={step.garmentId} category={step.category} unlocks={step.unlocks} weather={weather} />
-          <div className="flex gap-2">
-            <Button onClick={() => setStep({ kind: "pick" })}>Add another</Button>
-            <Button variant="outline" nativeButton={false} render={<Link href="/catalog" />}>Open catalog</Button>
+          <div className="flex w-full flex-col gap-2">
+            <Button size="lg" className="h-14 rounded-2xl text-base" onClick={() => setStep({ kind: "pick" })}><Plus aria-hidden />Add another</Button>
+            <Button variant="ghost" size="lg" className="text-muted-foreground" nativeButton={false} render={<Link href="/catalog" />}>Open catalog</Button>
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
-import Link from "next/link";
+import { Skeleton } from "@/components/garment-tile";
 import { currentUser } from "@/db/user";
 import { requireAuth } from "@/lib/auth";
 import { DEFAULT_WEATHER } from "@/lib/outfits/filter";
@@ -15,12 +15,9 @@ async function Add() {
 
 export default function AddPage() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 p-4 sm:p-6">
-      <header className="flex items-baseline justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Add an item</h1>
-        <Link href="/catalog" className="text-sm text-muted-foreground hover:underline">Catalog</Link>
-      </header>
-      <Suspense fallback={<p className="text-muted-foreground">Loading…</p>}><Add /></Suspense>
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 pt-5 pb-8">
+      <h1 className="text-[1.625rem] leading-tight font-semibold tracking-[-0.01em]">Add to your closet</h1>
+      <Suspense fallback={<Skeleton className="h-72 rounded-3xl" />}><Add /></Suspense>
     </main>
   );
 }
