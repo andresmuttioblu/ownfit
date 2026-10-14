@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { boolean, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import type { Weather } from "@/lib/outfits/filter";
 import type { BuyList } from "@/lib/lists/buy";
+import type { Trip } from "@/lib/trip/capsule";
 import type { StyleProfile } from "@/lib/style/profile";
 
 // SPEC.md §4. Only the tables Stage 3 needs; later stages add theirs.
@@ -21,6 +22,7 @@ export const users = pgTable("users", {
   onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
   weather: jsonb("weather").$type<Weather>(), // set by hand on the home screen; null = mild, dry
   buyList: jsonb("buy_list").$type<BuyList>(), // the last generated buy list; regenerated on request
+  trip: jsonb("trip").$type<Trip>(), // the current packing plan and what's ticked off; a new trip replaces it
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
