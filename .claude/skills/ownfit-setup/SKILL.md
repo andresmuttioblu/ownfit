@@ -60,27 +60,43 @@ pnpm --dir app install
 
 ## 5. Deploy (Vercel)
 
-Run these from `app/`:
+Run these from `app/`. `<project-id>` is the Neon id from step 4.
 
-1. `npx -y vercel login` — browser approval once.
-2. `npx -y vercel link --yes --project ownfit`
-3. Add the database URL for production and preview, reading it from the file so it never appears on the command line:
+1. `npx -y vercel login` opens the browser once.
+2. Pick the scope. `npx -y vercel teams ls` lists them; if there's more than one, ask the user which (usually their personal Hobby scope). Pass `--scope <scope>` to **every** vercel command below so nothing lands in a work team.
+3. `npx -y vercel link --yes --project ownfit --scope <scope>`
+4. Add the database URL to all three environments. Hold it in a shell variable (piping `neonctl` straight into `vercel` is too slow; vercel sees empty stdin) and never print it:
    ```bash
-   grep '^DATABASE_URL=' .env.local | cut -d= -f2- | tr -d '\n' > .dburl.tmp
-   npx -y vercel env add DATABASE_URL production --sensitive < .dburl.tmp
-   npx -y vercel env add DATABASE_URL preview --sensitive < .dburl.tmp
-   rm .dburl.tmp
+   V=$(npx -y neonctl connection-string --project-id <project-id> | tr -d '\n') && [ -n "$V" ] && for E in production preview development; do printf '%s' "$V" | npx -y vercel env add DATABASE_URL $E --yes --scope <scope> 2>&1 | grep -iv postgres; done; unset V
    ```
-4. Anthropic API key (needed from Stage 5 on; the user may skip it for now). **Don't ask them to paste it in chat.** Ask them to run this themselves in their own terminal, from `app/`, and paste the key at the prompt:
+   If a variable already exists (re-run), vercel says so; skip it unless the user wants it replaced (`--force`).
+5. Image storage (Cloudflare R2, private bucket):
+   1. `npx -y wrangler login` (browser approval once). `npx -y wrangler whoami` shows the account id.
+   2. `npx -y wrangler r2 bucket create ownfit-images`. If it fails with code 10042, R2 isn't enabled yet: ask the user to open https://dash.cloudflare.com → **R2 Object Storage** and enable it (free tier; Cloudflare asks for a payment method), then retry.
+   3. Add the non-secret values yourself, for production, preview and development, the same way as step 5.4: `R2_ACCOUNT_ID` (from whoami) and `R2_BUCKET` = `ownfit-images`.
+   4. The access key can only be created in the dashboard (Cloudflare has no CLI for it). Walk the user through: R2 → **Manage API tokens** → **Create Account API token** → permission **Object Read & Write** → **specific bucket: ownfit-images** → TTL **Forever** → Create. The page shows the keys once.
+6. Secrets the user enters themselves. **Never ask them to paste a secret in chat.** Ask them to run each of these in their own terminal from `app/`, pasting the value at the prompt. Production is stored as sensitive; development is what `vercel env pull` brings to their machine:
    ```bash
-   npx vercel env add ANTHROPIC_API_KEY production --sensitive
+   npx vercel env add R2_ACCESS_KEY_ID production --sensitive --scope <scope>
+   npx vercel env add R2_SECRET_ACCESS_KEY production --sensitive --scope <scope>
+   npx vercel env add APP_PASSWORD production --sensitive --scope <scope>
+   npx vercel env add ANTHROPIC_API_KEY production --sensitive --scope <scope>
+   npx vercel env add R2_ACCESS_KEY_ID development --scope <scope>
+   npx vercel env add R2_SECRET_ACCESS_KEY development --scope <scope>
+   npx vercel env add APP_PASSWORD development --scope <scope>
    ```
-   Explain: the deployed app bills model calls to this key (roughly cents per day); a Claude subscription doesn't cover a deployed app.
-5. `npx -y vercel deploy --prod` — report the production URL.
+   `APP_PASSWORD` is the app's passcode (the app stays locked until it's set). Recommend a random passphrase of 16+ characters from a password manager: the login only slows guessing, it doesn't rate-limit. The Anthropic key bills the deployed app's model calls (roughly cents per day); a Claude subscription doesn't cover a deployed app.
+   Then pull the development values to their machine: `npx -y vercel env pull --yes --scope <scope>` (writes `app/.env.local`; never print it).
+   Generate the session-signing secret yourself; it is never shown to anyone:
+   ```bash
+   S=$(openssl rand -base64 32 | tr -d '\n'); for E in production preview; do printf '%s' "$S" | npx -y vercel env add AUTH_SECRET $E --sensitive --yes --scope <scope>; done; printf '%s' "$S" | npx -y vercel env add AUTH_SECRET development --yes --scope <scope>; unset S
+   ```
+7. `pnpm --dir app db:migrate` again so the database has the latest tables.
+8. `npx -y vercel deploy --prod --yes --scope <scope>`. Then find the public URL: `npx -y vercel inspect <deployment-url> --scope <scope>` lists aliases; use the short `*.vercel.app` alias (the `-<scope>.vercel.app` ones are behind Vercel login).
 
 ## 6. Done
 
-Open the URL (or tell the user to). The page should say **Ownfit is set up** and **Database: connected**. If it says "not reachable", re-check step 5.3.
+Open the URL (or tell the user to). It asks for the passcode, then says **Ownfit is set up** and **Database: connected**. If it says "not reachable", re-check step 5.4.
 
 ## Re-running
 

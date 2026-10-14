@@ -1,0 +1,1 @@
+ALTER TYPE "public"."garment_status" ADD VALUE 'deleted';
