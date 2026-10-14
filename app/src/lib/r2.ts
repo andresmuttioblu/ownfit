@@ -23,8 +23,18 @@ function objectUrl(base: string, key: string): string {
 
 export async function putObject(key: string, body: Uint8Array, contentType: string): Promise<void> {
   const { client, base } = config();
-  const res = await client.fetch(objectUrl(base, key), { method: "PUT", body: new Uint8Array(body), headers: { "content-type": contentType } });
+  const res = await client.fetch(objectUrl(base, key), { method: "PUT", body: new Uint8Array(body),
+    headers: { "content-type": contentType, "content-length": String(body.byteLength) }, // R2 rejects chunked uploads
+  });
   if (!res.ok) throw new Error(`R2 upload failed for ${key}: ${res.status} ${await res.text()}`);
+}
+
+export async function objectExists(key: string): Promise<boolean> {
+  const { client, base } = config();
+  const res = await client.fetch(objectUrl(base, key), { method: "HEAD" });
+  if (res.status === 404) return false;
+  if (!res.ok) throw new Error(`R2 head failed for ${key}: ${res.status}`);
+  return true;
 }
 
 export async function deleteObject(key: string): Promise<void> {

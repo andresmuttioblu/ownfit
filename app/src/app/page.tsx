@@ -26,7 +26,7 @@ export default function Home() {
     <main className="mx-auto flex max-w-xl flex-1 flex-col justify-center gap-3 p-8">
       <h1 className="text-3xl font-semibold tracking-tight">Ownfit is set up</h1>
       <p className="text-muted-foreground">
-        <Link href="/catalog" className="underline">Open your catalog</Link>
+        <Link href="/catalog" className="underline">Open your catalog</Link> · <Link href="/add" className="underline">Add an item</Link>
       </p>
       <Suspense fallback={<p>Database: checking…</p>}>
         <DbStatus />

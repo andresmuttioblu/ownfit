@@ -22,7 +22,7 @@ async function Catalog() {
   if (items.length === 0) {
     return (
       <p className="text-muted-foreground">
-        Your catalog is empty. Import your closet with Claude Code: say <strong>&ldquo;import my closet&rdquo;</strong>.
+        Your catalog is empty. Import your closet with Claude Code (say <strong>&ldquo;import my closet&rdquo;</strong>), or <Link href="/add" className="underline">add an item by photo</Link>.
       </p>
     );
   }
@@ -34,7 +34,10 @@ export default function CatalogPage() {
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 p-4 sm:p-6">
       <header className="flex items-baseline justify-between gap-4">
         <h1 className="text-2xl font-semibold tracking-tight">Catalog</h1>
-        <Link href="/" className="text-sm text-muted-foreground hover:underline">Home</Link>
+        <nav className="flex gap-4 text-sm">
+          <Link href="/add" className="font-medium hover:underline">Add item</Link>
+          <Link href="/" className="text-muted-foreground hover:underline">Home</Link>
+        </nav>
       </header>
       <Suspense fallback={<p className="text-muted-foreground">Loading your catalog…</p>}>
         <Catalog />

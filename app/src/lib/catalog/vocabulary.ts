@@ -22,6 +22,12 @@ const isScale = (v: unknown) => Number.isInteger(v) && (v as number) >= 1 && (v 
 
 /** Problems with a full or partial tag set (partial = bulk edit); empty means valid. */
 export function validateTags(t: Partial<GarmentTags>): string[] {
+  // Shape first: values may come from a client or a model, not just from our own code.
+  const shapeErrors = [
+    ...(["name", "category", "subcategory", "pattern", "material"] as const).filter((k) => t[k] !== undefined && typeof t[k] !== "string"),
+    ...(["colors", "seasons", "tags"] as const).filter((k) => t[k] !== undefined && !Array.isArray(t[k])),
+  ].map((k) => `${k} has the wrong type`);
+  if (shapeErrors.length) return shapeErrors;
   const errors: string[] = [];
   const { categories, colors, patterns, materials, seasons, limits } = vocab;
   if (t.category !== undefined && !Object.hasOwn(categories, t.category)) errors.push(`Unknown category: ${t.category}`);
