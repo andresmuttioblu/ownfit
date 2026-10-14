@@ -39,4 +39,34 @@ Output lands in `output/<import-id>/`:
    - Duplicates of the same item → raise `--min-similarity` (e.g. 0.9) or `--min-still-s`.
    - Crops include too much of the person, or nothing is found → adjust `--diff-threshold` (higher = stricter).
    - Rough cutout edges → try `--model isnet-general-use` or `--model birefnet-general` (better edges, larger download, slower).
-4. Tagging and upload are the next step (Stage 3), not part of this skill yet.
+4. Once the user is happy with the contact sheet, continue with tagging.
+
+## Tag
+
+Look at every `items/NNN.png` yourself (open `crops/NNN.jpg` too when the clean image is ambiguous, e.g. to judge material or scale). Write `output/<import-id>/tags.json`: a JSON array with one record per item.
+
+Rules:
+- Use **only** values from `app/src/lib/catalog/garment-tags.json` (categories → subcategories, colors, patterns, materials, seasons). Read it first.
+- Tag the **presented garment only**, never the person holding it or what they're wearing.
+- `colors`: 1–3, main color first. `formality` and `warmth`: integers 1–5 (labels are in the vocabulary file). `seasons`: every season it suits.
+- `name`: short and specific, the way a person would say it ("navy merino crew-neck sweater", "black leather ankle boots"). Max 60 characters.
+- `tags`: up to 8 lowercase extras that help styling (e.g. "crew-neck", "cropped", "oversized", "gold-hardware").
+- If an item isn't a usable garment (a person, a blur, the same item twice in a row), write `{"id": "NNN", "skip": "<reason>"}` instead.
+
+Record shape:
+```json
+{"id": "001", "name": "navy merino crew-neck sweater", "category": "top", "subcategory": "sweater",
+ "colors": ["navy"], "pattern": "solid", "material": "wool", "formality": 3, "warmth": 4,
+ "seasons": ["autumn", "winter"], "tags": ["crew-neck"]}
+```
+
+Work in batches of about 10 images so progress is visible ("Tagged 20/34"). Then validate:
+
+- Mac/Linux: `pipeline/.venv/bin/python -m ownfit_pipeline.tags output/<import-id>`
+- Windows: `pipeline/.venv/Scripts/python -m ownfit_pipeline.tags output/<import-id>`
+
+Fix every problem it lists and re-run until it says valid. Show the user 5 sample tags.
+
+## Upload
+
+`pnpm --dir app catalog:upload ../output/<import-id>` uploads the images to the private R2 bucket and adds the rows to the database. It's safe to re-run (already-uploaded items are skipped). Then send the user to `/catalog` on their app to review: fix tags, merge duplicates, delete bad detections.
