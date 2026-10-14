@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { asc, desc, eq } from "drizzle-orm";
-import { Plus } from "lucide-react";
+import { ChevronRight, HandHeart, Plus, ShoppingBag } from "lucide-react";
 import { db } from "@/db";
 import { garments } from "@/db/schema";
 import { Skeleton } from "@/components/garment-tile";
@@ -11,6 +11,11 @@ import { Button } from "@/components/ui/button";
 import { requireAuth } from "@/lib/auth";
 import { signedGetUrl } from "@/lib/r2";
 import { CatalogReview, type CatalogItem } from "./catalog-review";
+
+const LISTS = [
+  { href: "/catalog/buy", label: "Buy list", hint: "Pieces that would unlock the most outfits", icon: ShoppingBag },
+  { href: "/catalog/let-go", label: "Sell or donate", hint: "Unworn, unloved and duplicates", icon: HandHeart },
+] as const;
 
 async function Catalog() {
   await connection();
@@ -42,6 +47,18 @@ export default function CatalogPage() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 pt-5 pb-8 lg:max-w-5xl">
       <h1 className="text-[1.625rem] leading-tight font-semibold tracking-[-0.01em]">Closet</h1>
+      <nav aria-label="Closet lists" className="flex flex-col gap-2 lg:flex-row">
+        {LISTS.map(({ href, label, hint, icon: Icon }) => (
+          <Link key={href} href={href} className="group flex min-h-16 flex-1 items-center gap-3.5 rounded-2xl bg-muted px-4 py-2 outline-none transition-[background-color,transform] duration-150 ease-(--ease-out-quart) hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.99]">
+            <Icon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+            <span className="flex flex-1 flex-col">
+              <span className="font-medium">{label}</span>
+              <span className="text-xs text-muted-foreground">{hint}</span>
+            </span>
+            <ChevronRight className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden />
+          </Link>
+        ))}
+      </nav>
       <Suspense fallback={<CatalogLoading />}>
         <Catalog />
       </Suspense>

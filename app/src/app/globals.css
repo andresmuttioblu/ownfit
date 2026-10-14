@@ -97,7 +97,8 @@
     @apply border-border outline-ring/50;
   }
   html {
-    @apply font-sans;
+    /* the font is set directly, not via the theme's font-sans, so a stale Tailwind cache can't drop it */
+    font-family: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
     color-scheme: light dark;
     -webkit-tap-highlight-color: transparent;
   }
