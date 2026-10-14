@@ -35,7 +35,10 @@ export type TagResult = { ok: true; tags: GarmentTags; notGarment: boolean } | {
 
 let client: Anthropic | null = null;
 
-export async function tagGarmentImage(pngBase64: string): Promise<TagResult> {
+/** A shop photo or screenshot may show a model or several items: only the item for sale gets tagged. */
+const SHOP_NOTE = " This is a shop photo or screenshot, not a cutout: it may show a person wearing it or other items. Tag only the main item being sold, and never describe the person.";
+
+export async function tagGarmentImage(base64: string, source: "cutout" | "shop" = "cutout"): Promise<TagResult> {
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "Tagging isn't configured (ANTHROPIC_API_KEY is missing)." };
   client ??= new Anthropic();
   let feedback = "";
@@ -49,8 +52,8 @@ export async function tagGarmentImage(pngBase64: string): Promise<TagResult> {
         messages: [{
           role: "user",
           content: [
-            { type: "image", source: { type: "base64", media_type: "image/png", data: pngBase64 } },
-            { type: "text", text: `Tag this item.${feedback}` },
+            { type: "image", source: { type: "base64", media_type: source === "shop" ? "image/jpeg" : "image/png", data: base64 } },
+            { type: "text", text: `Tag this item.${source === "shop" ? SHOP_NOTE : ""}${feedback}` },
           ],
         }],
       });
