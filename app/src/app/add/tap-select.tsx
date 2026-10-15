@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Minus, Plus, Undo2 } from "lucide-react";
 import { SwingingHanger } from "@/components/illustrations";
+import { useObjectUrl } from "./ui";
 import { Button } from "@/components/ui/button";
 import type { Cutout } from "@/lib/catalog/cutout";
 import type { Tap } from "@/lib/catalog/sam";
@@ -10,12 +11,13 @@ import type { Tap } from "@/lib/catalog/sam";
 type Segment = (taps: Tap[]) => Promise<HTMLCanvasElement>;
 
 /** The user taps the item on the photo; everything outside the selection is dimmed as they go. */
-export function TapSelect({ photo, photoUrl, onDone, onCancel }: {
+export function TapSelect({ photo, original, onDone, onCancel }: {
   photo: HTMLCanvasElement;
-  photoUrl: string;
+  original: Blob;
   onDone: (cutout: Cutout) => void;
   onCancel: () => void;
 }) {
+  const photoUrl = useObjectUrl(original);
   const [segment, setSegment] = useState<Segment | null>(null);
   const [taps, setTaps] = useState<Tap[]>([]);
   const [include, setInclude] = useState(true);
@@ -91,7 +93,7 @@ export function TapSelect({ photo, photoUrl, onDone, onCancel }: {
       {!segment && !error && <SwingingHanger className="mx-auto h-10 text-muted-foreground" />}
       <div className="relative mx-auto w-full max-w-sm cursor-crosshair touch-manipulation overflow-hidden rounded-2xl bg-muted select-none" onClick={onTap}>
         {/* eslint-disable-next-line @next/next/no-img-element -- local object URL */}
-        <img src={photoUrl} alt="Your photo" className="block w-full" draggable={false} />
+        {photoUrl && <img src={photoUrl} alt="Your photo" className="block w-full" draggable={false} />}
         <canvas ref={overlay} className="pointer-events-none absolute inset-0 h-full w-full" />
         {taps.map((t, i) => (
           <span key={i} aria-hidden

@@ -1,10 +1,21 @@
 "use client";
 
-import type { CSSProperties, ReactNode, Ref } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode, type Ref } from "react";
 import { ChevronRight } from "lucide-react";
 import { activityIcon } from "@/app/_today/activity-icon";
 import { SwingingHanger } from "@/components/illustrations";
 import type { Unlock } from "@/lib/outfits/filter";
+
+/** An object URL for a blob, made while shown and revoked when hidden (also when Next keeps the page hidden in the background). */
+export function useObjectUrl(blob: Blob): string {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    const u = URL.createObjectURL(blob);
+    setUrl(u); // eslint-disable-line react-hooks/set-state-in-effect -- the URL is an external resource tied to this effect
+    return () => URL.revokeObjectURL(u);
+  }, [blob]);
+  return url;
+}
 
 /** One choice per row: muted fill, icon, label, chevron; inverted when selected. Same look as Today's activity rows. */
 export const ROW = "group flex min-h-16 w-full items-center gap-3.5 rounded-2xl px-4 py-2 text-left transition-[background-color,color,transform] duration-150 ease-(--ease-out-quart) outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.99] disabled:opacity-50";

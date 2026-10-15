@@ -13,7 +13,7 @@ import type { GarmentTags } from "@/lib/catalog/vocabulary";
 import { confirmDraft, discardDraft } from "./actions";
 import { TapSelect } from "./tap-select";
 import { Unlocks } from "./unlocks";
-import { PhotoDrop, ROW, rowTone, Wait } from "./ui";
+import { PhotoDrop, ROW, rowTone, useObjectUrl, Wait } from "./ui";
 import type { Unlock, Weather } from "@/lib/outfits/filter";
 
 const EMPTY_TAGS: GarmentTags = {
@@ -22,8 +22,8 @@ const EMPTY_TAGS: GarmentTags = {
 };
 
 type Draft = { draftId: string; imageUrl: string; tags: GarmentTags; warnings: string[] };
-/** A photo being worked on, kept in the browser until it is uploaded. */
-type Shot = { photo: HTMLCanvasElement; original: Blob; photoUrl: string; cutout: Cutout; cutoutUrl: string };
+/** A photo being worked on, kept in the browser until it is uploaded. Object URLs are made where it's shown (useObjectUrl). */
+type Shot = { photo: HTMLCanvasElement; original: Blob; cutout: Cutout };
 type Step =
   | { kind: "pick" }
   | { kind: "working"; message: string }
@@ -38,13 +38,17 @@ async function makeShot(file: File): Promise<Shot> {
   preloadTapModels();
   const cutout = await onWhite(photo, await autoMask(photo));
   const original = await toBlob(photo, "image/jpeg", 0.85);
-  return { photo, original, photoUrl: URL.createObjectURL(original), cutout, cutoutUrl: URL.createObjectURL(cutout.clean) };
+  return { photo, original, cutout };
 }
 
+/** Done with a shot for good (retaken or uploaded). Not on unmount: Next may only be hiding the page and bring it back. */
 function release(shot: Shot) {
-  URL.revokeObjectURL(shot.photoUrl);
-  URL.revokeObjectURL(shot.cutoutUrl);
   shot.photo.width = shot.photo.height = 0; // iOS Safari frees canvas memory late
+}
+
+function CutoutImage({ blob }: { blob: Blob }) {
+  const url = useObjectUrl(blob);
+  return url ? <GarmentImage src={url} alt="Cutout of your item" className="rounded-2xl" /> : <div className="aspect-square w-full rounded-2xl bg-tile" />;
 }
 
 async function createDraft({ original, cutout }: Shot): Promise<Draft> {
@@ -74,10 +78,6 @@ export function AddGarment({ weather, initialFile }: { weather: Weather; initial
   useEffect(() => { // download the model while the user frames the photo
     import("@/lib/catalog/cutout").then((m) => m.preloadCutoutModel()).catch(console.error);
   }, []);
-
-  const shown = useRef<Shot | null>(null); // the shot on screen, released if the user leaves mid-flow
-  useEffect(() => { shown.current = step.kind === "check" || step.kind === "tap" ? step.shot : null; }, [step]);
-  useEffect(() => () => { if (shown.current) release(shown.current); }, []);
 
   function fail(e: unknown) {
     console.error(e);
@@ -112,8 +112,7 @@ export function AddGarment({ weather, initialFile }: { weather: Weather; initial
   }
 
   function acceptTapCutout(shot: Shot, cutout: Cutout) {
-    URL.revokeObjectURL(shot.cutoutUrl);
-    setStep({ kind: "check", shot: { ...shot, cutout, cutoutUrl: URL.createObjectURL(cutout.clean) } });
+    setStep({ kind: "check", shot: { ...shot, cutout } });
   }
 
   async function upload(shot: Shot) {
@@ -161,7 +160,7 @@ export function AddGarment({ weather, initialFile }: { weather: Weather; initial
       {step.kind === "check" && (
         <>
           <div className="rise-in flex flex-col items-center gap-3 rounded-3xl bg-muted p-2">
-            <GarmentImage src={step.shot.cutoutUrl} alt="Cutout of your item" className="rounded-2xl" />
+            <CutoutImage blob={step.shot.cutout.clean} />
           </div>
           <h2 className="-mb-2 text-center text-lg font-semibold">Is that just the item?</h2>
           {step.shot.cutout.isBlank && <Notice tone="warning">The cutout looks almost empty. Tap the item to select it.</Notice>}
@@ -179,7 +178,7 @@ export function AddGarment({ weather, initialFile }: { weather: Weather; initial
       )}
 
       {step.kind === "tap" && (
-        <TapSelect photo={step.shot.photo} photoUrl={step.shot.photoUrl}
+        <TapSelect photo={step.shot.photo} original={step.shot.original}
           onDone={(cutout) => acceptTapCutout(step.shot, cutout)}
           onCancel={() => setStep({ kind: "check", shot: step.shot })} />
       )}

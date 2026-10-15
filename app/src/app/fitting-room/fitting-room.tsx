@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
+import { useRef, useState, useTransition, type CSSProperties } from "react";
 import { Copy, Layers, ShoppingBag, Sparkles, Unlink } from "lucide-react";
 import { QuestionTag, SwingingHanger } from "@/components/illustrations";
 import { FlatLay } from "@/components/flat-lay";
@@ -13,7 +13,7 @@ import { localToday } from "@/app/_today/outfit-card";
 import type { GarmentTags } from "@/lib/catalog/vocabulary";
 import type { Weather } from "@/lib/outfits/filter";
 import type { Assessment } from "@/lib/outfits/fitting";
-import { PhotoDrop, UnlockRows, Wait } from "@/app/add/ui";
+import { PhotoDrop, UnlockRows, useObjectUrl, Wait } from "@/app/add/ui";
 import { exampleOutfits, type ExampleResult } from "./actions";
 
 const MAX_SIDE = 1600;
@@ -92,19 +92,8 @@ export function FittingRoom({ weather }: { weather: Weather }) {
 
 type VerdictProps = { step: Extract<Step, { kind: "result" }>; weather: Weather; onBought: () => void; onAgain: () => void };
 
-/** An object URL for the photo, made while shown and revoked when hidden (also when Next keeps the page hidden in the background). */
-function usePhotoUrl(photo: File): string {
-  const [url, setUrl] = useState("");
-  useEffect(() => {
-    const u = URL.createObjectURL(photo);
-    setUrl(u); // eslint-disable-line react-hooks/set-state-in-effect -- the URL is an external resource tied to this effect
-    return () => URL.revokeObjectURL(u);
-  }, [photo]);
-  return url;
-}
-
 function Verdict({ step: { photo, checked }, weather, onBought, onAgain }: VerdictProps) {
-  const photoUrl = usePhotoUrl(photo);
+  const photoUrl = useObjectUrl(photo);
   const [activity, setActivity] = useState<string | null>(null);
   const [examples, setExamples] = useState<ExampleResult | null>(null);
   const [pending, startTransition] = useTransition();
