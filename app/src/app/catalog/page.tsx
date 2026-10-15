@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { ChevronRight, HandHeart, Luggage, Plus, ShoppingBag } from "lucide-react";
 import { db } from "@/db";
 import { garments } from "@/db/schema";
+import { currentUser } from "@/db/user";
 import { Skeleton } from "@/components/garment-tile";
 import { EmptyRail } from "@/components/illustrations";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,8 @@ const LISTS = [
 async function Catalog() {
   await connection();
   await requireAuth();
-  const rows = await db.select().from(garments).where(eq(garments.status, "active"))
+  const user = await currentUser();
+  const rows = await db.select().from(garments).where(and(eq(garments.userId, user.id), eq(garments.status, "active")))
     .orderBy(desc(garments.needsReview), asc(garments.category), asc(garments.createdAt));
   const items: CatalogItem[] = await Promise.all(rows.map(async (g) => ({
     id: g.id, name: g.name, category: g.category, subcategory: g.subcategory, colors: g.colors,

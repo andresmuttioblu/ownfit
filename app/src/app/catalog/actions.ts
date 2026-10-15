@@ -4,6 +4,7 @@ import { and, eq, inArray, ne } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { db } from "@/db";
 import { garments } from "@/db/schema";
+import { currentUser } from "@/db/user";
 import { requireAuth } from "@/lib/auth";
 import { validateTags, type GarmentTags } from "@/lib/catalog/vocabulary";
 import { deleteObject } from "@/lib/r2";
@@ -33,10 +34,11 @@ function pickPatch(input: unknown): GarmentPatch {
   return patch as GarmentPatch;
 }
 
-async function run(fn: () => Promise<void>): Promise<ActionResult> {
+/** Runs a catalog change for the signed-in user; every query below is scoped to their id. */
+async function run(fn: (userId: string) => Promise<void>): Promise<ActionResult> {
   try {
     await requireAuth().catch(() => { throw new UserError("Your session expired. Reload and sign in again."); });
-    await fn();
+    await fn((await currentUser()).id);
     refresh();
     return { ok: true };
   } catch (e) {
@@ -47,10 +49,10 @@ async function run(fn: () => Promise<void>): Promise<ActionResult> {
 
 /** Apply the same change to one or many garments. All rows are validated before any is written. */
 export async function updateGarments(ids: string[], input: GarmentPatch): Promise<ActionResult> {
-  return run(async () => {
+  return run(async (userId) => {
     const valid = checkIds(ids);
     const patch = pickPatch(input);
-    const rows = await db.select().from(garments).where(inArray(garments.id, valid));
+    const rows = await db.select().from(garments).where(and(inArray(garments.id, valid), eq(garments.userId, userId), ne(garments.status, "deleted")));
     const updates = rows.map((row) => {
       const merged = { ...row, ...patch };
       // A category change without a subcategory resets it to "other" so the pair stays valid.
@@ -59,16 +61,16 @@ export async function updateGarments(ids: string[], input: GarmentPatch): Promis
       if (errors.length) throw new UserError(`${row.name}: ${errors.join("; ")}`);
       return db.update(garments).set({
         ...patch, subcategory: merged.subcategory, ...(patch.name ? { name: patch.name.trim() } : {}),
-      }).where(eq(garments.id, row.id));
+      }).where(and(eq(garments.id, row.id), eq(garments.userId, userId)));
     });
     if (updates.length) await db.batch(updates as [typeof updates[number], ...typeof updates]); // one transaction
   });
 }
 
 /** Soft delete: the row stays as a tombstone (so re-running an upload doesn't bring it back); images go. */
-async function removeGarments(ids: string[]) {
+async function removeGarments(userId: string, ids: string[]) {
   const rows = await db.update(garments).set({ status: "deleted" })
-    .where(and(inArray(garments.id, ids), ne(garments.status, "deleted"))).returning();
+    .where(and(inArray(garments.id, ids), eq(garments.userId, userId), ne(garments.status, "deleted"))).returning();
   // Images go after the rows: a failed image delete leaves an orphan file, never a broken card.
   for (const key of rows.flatMap((r) => [r.imageKey, r.sourceImageKey])) {
     if (key) await deleteObject(key).catch((e) => console.error("orphaned image", key, e));
@@ -76,18 +78,18 @@ async function removeGarments(ids: string[]) {
 }
 
 export async function deleteGarments(ids: string[]): Promise<ActionResult> {
-  return run(() => removeGarments(checkIds(ids)));
+  return run((userId) => removeGarments(userId, checkIds(ids)));
 }
 
 /** Duplicates: keep one, delete the rest. */
 export async function mergeGarments(keepId: string, ids: string[]): Promise<ActionResult> {
-  return run(async () => {
+  return run(async (userId) => {
     const [keep] = checkIds([keepId]);
     const others = checkIds(ids).filter((id) => id !== keep);
     if (others.length === 0) throw new UserError("Select at least two items to merge");
     const [kept] = await db.update(garments).set({ needsReview: false })
-      .where(and(eq(garments.id, keep), eq(garments.status, "active"))).returning({ id: garments.id });
+      .where(and(eq(garments.id, keep), eq(garments.userId, userId), eq(garments.status, "active"))).returning({ id: garments.id });
     if (!kept) throw new UserError("The item to keep no longer exists. Reload and try again.");
-    await removeGarments(others);
+    await removeGarments(userId, others);
   });
 }
