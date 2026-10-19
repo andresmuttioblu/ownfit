@@ -16,7 +16,7 @@ function OneOf<T extends string>({ options, value, onChange, clearable }: {
         const on = value === o;
         return (
           <button key={o} type="button" aria-pressed={on} onClick={() => onChange(on && clearable ? null : o)}
-            className={`h-11 rounded-full px-4 text-sm capitalize transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring ${on ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-accent"}`}>
+            className={`h-11 rounded-full px-4 text-sm transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring ${on ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-accent"}`}>
             {o}
           </button>
         );
