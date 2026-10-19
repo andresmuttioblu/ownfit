@@ -4,6 +4,7 @@ import type { Weather } from "@/lib/outfits/filter";
 import type { BuyList } from "@/lib/lists/buy";
 import type { Trip } from "@/lib/trip/capsule";
 import type { StyleProfile } from "@/lib/style/profile";
+import type { Coloring } from "@/lib/style/coloring";
 
 // SPEC.md §4. Only the tables Stage 3 needs; later stages add theirs.
 
@@ -18,6 +19,7 @@ export const users = pgTable("users", {
   stylePreference: text("style_preference"), // free-form wardrobe conventions, not a gender switch
   conventions: text("conventions").array().notNull().default(sql`'{}'::text[]`), // menswear / womenswear, any mix
   styleProfile: jsonb("style_profile").$type<StyleProfile>(), // raw scores; summarize() for the readable view
+  coloring: jsonb("coloring").$type<Coloring>(), // self-reported colors that suit them; null = not answered
   activities: text("activities").array().notNull().default(sql`'{}'::text[]`), // the daily-outfit buttons
   onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
   weather: jsonb("weather").$type<Weather>(), // set by hand on the home screen; null = mild, dry

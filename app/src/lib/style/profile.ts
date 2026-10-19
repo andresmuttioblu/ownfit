@@ -1,6 +1,7 @@
 // Style profile: raw scores accumulated from onboarding picks and reference images.
 // Kept raw so later feedback (Stage 6) can keep adding to it; summarize() gives the readable view.
 import STYLE_VOCAB from "./style-vocab.json";
+import type { Coloring } from "./coloring";
 
 export { STYLE_VOCAB };
 
@@ -19,6 +20,7 @@ export type StyleProfile = {
 export type StyleSummary = Record<Dimension, Record<string, number>> & {
   formalityLean: number | null;
   sources: StyleProfile["sources"];
+  coloring?: Coloring | null;
 };
 
 export function emptyProfile(): StyleProfile {
@@ -57,6 +59,12 @@ export function summarize(profile: StyleProfile): StyleSummary {
   })) as Record<Dimension, Record<string, number>>;
   const { sum, count } = profile.formality;
   return { ...dims, formalityLean: count ? Math.round((sum / count) * 10) / 10 : null, sources: profile.sources };
+}
+
+/** What the prompts get for a user: the summarized profile plus their coloring, or null when there's neither. */
+export function styleFor(user: { styleProfile: StyleProfile | null; coloring: Coloring | null }): StyleSummary | null {
+  if (!user.styleProfile && !user.coloring) return null;
+  return { ...summarize(user.styleProfile ?? emptyProfile()), coloring: user.coloring };
 }
 
 /** Problems with a weights object (from a preset file or a model), empty if it's valid. */

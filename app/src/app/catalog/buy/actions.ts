@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { currentUser } from "@/db/user";
 import { suggestBuys, type BuyResult } from "@/lib/lists/buy";
-import { summarize } from "@/lib/style/profile";
+import { styleFor } from "@/lib/style/profile";
 import STYLE_VOCAB from "@/lib/style/style-vocab.json";
 import { hourlyLimiter } from "@/lib/upload";
 
@@ -20,7 +20,7 @@ export async function refreshBuyList(): Promise<BuyResult> {
     const user = await currentUser();
     const closet = await activeCloset(user.id);
     const activities = user.activities.length ? user.activities : STYLE_VOCAB.activities;
-    const result = await suggestBuys(closet, activities, user.styleProfile ? summarize(user.styleProfile) : null);
+    const result = await suggestBuys(closet, activities, styleFor(user));
     if (result.ok) await db.update(users).set({ buyList: result.list }).where(eq(users.id, user.id));
     return result;
   } catch (e) {

@@ -13,7 +13,7 @@ import {
   activeCloset, FAILED, isActivity, isIdList, isWeather, MAX_ACTIVITY, SESSION_EXPIRED, signedIn, toOutfitPiece, UUID,
   type ClosetPiece, type Outfit, type OutfitPiece,
 } from "./closet";
-import { summarize } from "@/lib/style/profile";
+import { styleFor } from "@/lib/style/profile";
 
 const REPEAT_DAYS = 7; // an outfit worn this recently isn't suggested again as-is
 const FEEDBACK_IN_PROMPT = 10;
@@ -77,7 +77,7 @@ export async function outfitsFor(activity: string, weather: Weather, today: stri
     if (missing.length) return { kind: "missing", missing, activity: activity.trim(), weather };
 
     const history = await historyFor(user.id, today, new Map(closet.map((g) => [g.id, g])));
-    const profile = user.styleProfile ? summarize(user.styleProfile) : null;
+    const profile = styleFor(user);
     const result = await suggestOutfits(activity.trim(), weather, profile, candidates, history, mustInclude);
     if (!result.ok) return { kind: "error", error: result.error };
     const byId = new Map(closet.map((g) => [g.id, g]));
@@ -108,7 +108,7 @@ export async function swapPiece(outfitIds: string[], outId: string, activity: st
     const out = byId.get(outId);
     if (!out || outfit.length !== outfitIds.length) return { ok: false, error: "This outfit changed. Ask for new outfits." };
     const pool = candidatesFor(closet.filter((g) => active.has(g.id) && isAvailableOn(g, today)), activity, weather);
-    const profile = user.styleProfile ? summarize(user.styleProfile) : null;
+    const profile = styleFor(user);
     const result = await styleSwap(outfit, out, pool, activity.trim(), weather, profile);
     if (!result.ok) return result;
     return { ok: true, piece: await toOutfitPiece(byId.get(result.piece.id)!) };

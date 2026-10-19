@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { currentUser } from "@/db/user";
 import { isLocalDate } from "@/lib/outfits/feedback";
-import { summarize } from "@/lib/style/profile";
+import { styleFor } from "@/lib/style/profile";
 import { packCapsule, type TripDay } from "@/lib/trip/capsule";
 import { addDays, isDestination, MAX_DAYS, MAX_DESTINATION, tripWeather, type Source, type WeatherResult } from "@/lib/trip/weather";
 import { hourlyLimiter } from "@/lib/upload";
@@ -48,7 +48,7 @@ export async function packTrip(input: PackInput): Promise<PackResult> {
   try {
     const user = await currentUser();
     const clean = days.map((d) => ({ date: d.date, weather: { temp: d.weather.temp, rain: d.weather.rain }, activity: d.activity.trim() }));
-    const result = await packCapsule(await activeCloset(user.id), clean, destination.trim(), user.styleProfile ? summarize(user.styleProfile) : null);
+    const result = await packCapsule(await activeCloset(user.id), clean, destination.trim(), styleFor(user));
     if (!result.ok) return result;
     const trip = { destination: destination.trim(), place, source, generatedAt: new Date().toISOString(), days: result.days, capsule: result.capsule, outfits: result.outfits, packed: [] };
     await db.update(users).set({ trip }).where(eq(users.id, user.id));

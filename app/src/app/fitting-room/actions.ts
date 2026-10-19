@@ -9,7 +9,7 @@ import { isAvailableOn, isLocalDate } from "@/lib/outfits/feedback";
 import { candidatesFor, missingPieces, outfitsWith, type Weather } from "@/lib/outfits/filter";
 import { CANDIDATE_ID } from "@/lib/outfits/fitting";
 import { NO_HISTORY, suggestOutfits } from "@/lib/outfits/style";
-import { summarize } from "@/lib/style/profile";
+import { styleFor } from "@/lib/style/profile";
 import { hourlyLimiter } from "@/lib/upload";
 
 const overLimit = hourlyLimiter(60);
@@ -38,7 +38,7 @@ export async function exampleOutfits(tags: GarmentTags, activity: string, weathe
     if (missingPieces(pieces, weather).length || !outfitsWith(pieces, candidate)) {
       return { ok: false, error: `You don't own what it needs for a complete ${activity.trim()} outfit in ${weatherWords}.` };
     }
-    const profile = user.styleProfile ? summarize(user.styleProfile) : null;
+    const profile = styleFor(user);
     const result = await suggestOutfits(activity.trim(), weather, profile, pieces, NO_HISTORY, CANDIDATE_ID);
     if (!result.ok) return result;
     const outfits = await Promise.all(result.outfits.map(async (o) => ({
