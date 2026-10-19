@@ -1,5 +1,6 @@
 // Ask Claude to put outfits together from pieces the code already filtered, then keep only valid ones.
 import Anthropic from "@anthropic-ai/sdk";
+import { coloringLine } from "@/lib/style/coloring";
 import type { StyleSummary } from "@/lib/style/profile";
 import { isRepeat } from "./feedback";
 import { outfitProblems, type Piece, type Weather } from "./filter";
@@ -49,9 +50,11 @@ function historyLines(h: History): string[] {
 /** The style profile in one prompt line. */
 export function styleLine(profile: StyleSummary | null): string {
   const top = (d: Record<string, number> | undefined) => Object.keys(d ?? {}).slice(0, 4).join(", ") || "unknown";
-  return profile
+  const style = profile && (profile.sources.rounds || profile.sources.references)
     ? `Style: leans ${top(profile.archetypes)}; colors ${top(profile.palette)}; fit ${top(profile.fit)}; patterns ${top(profile.pattern)}; formality lean ${profile.formalityLean ?? "unknown"}`
     : "Style: no profile yet; keep it classic and versatile.";
+  const coloring = coloringLine(profile?.coloring);
+  return coloring ? `${style}\n${coloring}` : style;
 }
 
 function prompt(activity: string, weather: Weather, profile: StyleSummary | null, pieces: Piece[], history: History): string {

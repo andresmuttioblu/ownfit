@@ -6,6 +6,7 @@ import { users } from "@/db/schema";
 import { currentUser } from "@/db/user";
 import { requireAuth } from "@/lib/auth";
 import { ROUNDS, type Convention } from "@/lib/style/presets";
+import { cleanColoring, coloringProblem, type Coloring } from "@/lib/style/coloring";
 import { addPick, emptyProfile, STYLE_VOCAB, summarize, validateWeights, type StyleSummary, type StyleWeights } from "@/lib/style/profile";
 
 export type OnboardingInput = {
@@ -15,6 +16,7 @@ export type OnboardingInput = {
   picks: (string | null)[]; // per round: the picked style, or null for "none of these"
   references: StyleWeights[]; // read by /api/style/reference
   activities: string[];
+  coloring: Coloring | null; // null = skipped
 };
 
 export type OnboardingResult = { ok: true; profile: StyleSummary } | { ok: false; error: string };
@@ -33,7 +35,7 @@ function problems(input: OnboardingInput): string | null {
   if (!Array.isArray(references) || references.length > limits.references || references.some((w) => validateWeights(w).length)) return "Invalid reference images";
   if (!Array.isArray(activities) || !activities.length || activities.length > limits.activities) return `Pick 1-${limits.activities} activities`;
   if (activities.some((a) => typeof a !== "string" || !a.trim() || a.trim().length > limits.activity_length)) return `Activities must be 1-${limits.activity_length} characters`;
-  return null;
+  return coloringProblem(input.coloring);
 }
 
 /**
@@ -62,6 +64,7 @@ export async function saveOnboarding(input: OnboardingInput): Promise<Onboarding
       conventions: [...new Set(input.conventions)],
       activities: [...new Set(input.activities.map((a) => a.trim().toLowerCase()))],
       styleProfile: profile,
+      coloring: cleanColoring(input.coloring),
       onboardedAt: new Date(),
     }).where(eq(users.id, user.id));
     return { ok: true, profile: summarize(profile) };

@@ -11,18 +11,20 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/app/catalog/tag-fields";
 import { ROUNDS, type Convention } from "@/lib/style/presets";
 import { STYLE_VOCAB, type StyleSummary } from "@/lib/style/profile";
+import type { Coloring } from "@/lib/style/coloring";
 import { saveOnboarding } from "./actions";
+import { ColorsStep, NO_COLORING } from "./colors-step";
 import { FilmingGuide } from "./filming-guide";
 import { References, type Reference } from "./references";
 import { StyleRound } from "./style-round";
 
-export type Prefill = { name: string; age: number | null; conventions: Convention[]; activities: string[] };
+export type Prefill = { name: string; age: number | null; conventions: Convention[]; activities: string[]; coloring: Coloring | null };
 
-// about, 5 rounds, references, activities, filming guide
-const STEPS = ["about", ...ROUNDS.map((_, i) => `round-${i}`), "references", "activities", "filming"] as const;
+// about, 5 rounds, references, colors, activities, filming guide
+const STEPS = ["about", ...ROUNDS.map((_, i) => `round-${i}`), "references", "colors", "activities", "filming"] as const;
 const { limits } = STYLE_VOCAB;
 const CONVENTION_ICONS: Record<Convention, LucideIcon> = { menswear: Shirt, womenswear: Sparkles };
-const TITLES = { about: "About you", references: "Outfits you like", activities: "What do you usually dress for?", filming: "Last thing: your closet" } as const;
+const TITLES = { about: "About you", references: "Outfits you like", colors: "Colors that suit you", activities: "What do you usually dress for?", filming: "Last thing: your closet" } as const;
 
 export function Onboarding({ prefill }: { prefill: Prefill }) {
   const [step, setStep] = useState(0);
@@ -36,6 +38,7 @@ export function Onboarding({ prefill }: { prefill: Prefill }) {
   useEffect(() => { shownRefs.current = references; }, [references]);
   useEffect(() => () => shownRefs.current.forEach((r) => URL.revokeObjectURL(r.previewUrl)), []);
   const [activities, setActivities] = useState<string[]>(prefill.activities.length ? prefill.activities : ["office", "casual"]);
+  const [coloring, setColoring] = useState<Coloring>(prefill.coloring ?? NO_COLORING);
   const [custom, setCustom] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<StyleSummary | null>(null);
@@ -67,7 +70,7 @@ export function Onboarding({ prefill }: { prefill: Prefill }) {
     startTransition(async () => {
       const result = await saveOnboarding({
         name, age: ageNumber, conventions, picks: picks.map((p) => p ?? null),
-        references: references.map((r) => r.weights), activities,
+        references: references.map((r) => r.weights), activities, coloring,
       });
       if (result.ok) setProfile(result.profile);
       else setError(result.error);
@@ -121,6 +124,13 @@ export function Onboarding({ prefill }: { prefill: Prefill }) {
           <>
             <h2 className="text-[1.625rem] leading-tight font-semibold tracking-[-0.01em]">{TITLES.references} <span className="text-base font-normal text-muted-foreground">optional</span></h2>
             <References value={references} onChange={setReferences} busy={reading} setBusy={setReading} />
+          </>
+        )}
+
+        {current === "colors" && (
+          <>
+            <h2 className="text-[1.625rem] leading-tight font-semibold tracking-[-0.01em]">{TITLES.colors} <span className="text-base font-normal text-muted-foreground">optional</span></h2>
+            <ColorsStep value={coloring} onChange={setColoring} />
           </>
         )}
 

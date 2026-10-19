@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { currentUser } from "@/db/user";
 import { requireAuth } from "@/lib/auth";
+import { knownColors } from "@/lib/style/coloring";
 import type { Convention } from "@/lib/style/presets";
 import { Onboarding } from "./onboarding";
 
@@ -9,7 +10,7 @@ async function Loaded() {
   await connection();
   await requireAuth();
   const user = await currentUser();
-  return <Onboarding prefill={{ name: user.name ?? "", age: user.age, conventions: user.conventions as Convention[], activities: user.activities }} />;
+  return <Onboarding prefill={{ name: user.name ?? "", age: user.age, conventions: user.conventions as Convention[], activities: user.activities, coloring: knownColors(user.coloring) }} />;
 }
 
 function Loading() {
